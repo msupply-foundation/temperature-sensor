@@ -1,0 +1,822 @@
+Device: Q-tag Fridge-tag 2
+Vers: 0.5
+Fw Vers: 3.4p0o
+Sensor: 1
+Conf:
+ Serial: 130400191542
+ PCB: BG0214402664
+ CID: 1000
+ Lot: 1792_20_08
+ Zone: 0.00
+ Measurement delay: 10
+ Moving Avrg: 1
+ User Alarm Config: 0
+ User Clock Config: 1
+ Alarm Indication: 0
+ Temp unit: C
+ Alarm:
+  0:
+   T AL: -0.5, t AL: 60
+  1:
+   T AL: +8.0, t AL: 600
+ Int Sensor:
+  Timeout: 1, Offset: +0.0
+ Report history length: 60
+ Det Report: 3
+ Use ext devices: 0
+ Test Res: 1, Test TS: 2022-02-02 06:54
+Errors:
+ 19:
+  Err Count: 1, Err TS: 2022-03-24 15:30
+Hist:
+ TS Actv: 2022-03-24 02:22
+ TS Report Creation: 2023-02-14 06:05
+ 1:
+  Date: 2023-02-14
+  Min T: +18.0, TS Min T: 00:00
+  Max T: +18.8, TS Max T: 04:57
+  Avrg T: +18.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 366, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 2:
+  Date: 2023-02-13
+  Min T: +16.5, TS Min T: 20:19
+  Max T: +18.2, TS Max T: 05:30
+  Avrg T: +17.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 3:
+  Date: 2023-02-12
+  Min T: +16.6, TS Min T: 21:56
+  Max T: +18.0, TS Max T: 04:26
+  Avrg T: +17.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 4:
+  Date: 2023-02-11
+  Min T: +16.8, TS Min T: 22:29
+  Max T: +18.3, TS Max T: 12:12
+  Avrg T: +17.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 5:
+  Date: 2023-02-10
+  Min T: +16.0, TS Min T: 21:52
+  Max T: +18.2, TS Max T: 06:30
+  Avrg T: +17.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 6:
+  Date: 2023-02-09
+  Min T: +15.7, TS Min T: 22:00
+  Max T: +18.8, TS Max T: 04:28
+  Avrg T: +17.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 7:
+  Date: 2023-02-08
+  Min T: +17.0, TS Min T: 20:21
+  Max T: +19.0, TS Max T: 06:19
+  Avrg T: +18.1
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 8:
+  Date: 2023-02-07
+  Min T: +16.7, TS Min T: 20:32
+  Max T: +18.7, TS Max T: 05:07
+  Avrg T: +17.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 9:
+  Date: 2023-02-06
+  Min T: +15.7, TS Min T: 20:19
+  Max T: +18.4, TS Max T: 21:49
+  Avrg T: +16.7
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 10:
+  Date: 2023-02-05
+  Min T: +15.9, TS Min T: 23:03
+  Max T: +18.3, TS Max T: 05:54
+  Avrg T: +17.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 11:
+  Date: 2023-02-04
+  Min T: +16.8, TS Min T: 22:57
+  Max T: +18.1, TS Max T: 01:30
+  Avrg T: +17.7
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 12:
+  Date: 2023-02-03
+  Min T: +17.1, TS Min T: 20:58
+  Max T: +19.0, TS Max T: 05:55
+  Avrg T: +18.0
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 13:
+  Date: 2023-02-02
+  Min T: +16.3, TS Min T: 20:53
+  Max T: +17.5, TS Max T: 05:10
+  Avrg T: +17.0
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 14:
+  Date: 2023-02-01
+  Min T: +16.1, TS Min T: 20:12
+  Max T: +18.3, TS Max T: 06:15
+  Avrg T: +17.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 15:
+  Date: 2023-01-31
+  Min T: +16.3, TS Min T: 19:49
+  Max T: +18.1, TS Max T: 06:15
+  Avrg T: +17.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 16:
+  Date: 2023-01-30
+  Min T: +15.9, TS Min T: 20:20
+  Max T: +17.6, TS Max T: 03:49
+  Avrg T: +16.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 17:
+  Date: 2023-01-29
+  Min T: +16.2, TS Min T: 22:54
+  Max T: +17.7, TS Max T: 11:57
+  Avrg T: +17.1
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 18:
+  Date: 2023-01-28
+  Min T: +16.0, TS Min T: 21:59
+  Max T: +17.7, TS Max T: 05:31
+  Avrg T: +16.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 19:
+  Date: 2023-01-27
+  Min T: +16.3, TS Min T: 22:03
+  Max T: +18.6, TS Max T: 06:29
+  Avrg T: +17.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 20:
+  Date: 2023-01-26
+  Min T: +16.4, TS Min T: 21:39
+  Max T: +18.4, TS Max T: 01:05
+  Avrg T: +17.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 21:
+  Date: 2023-01-25
+  Min T: +17.5, TS Min T: 20:09
+  Max T: +19.5, TS Max T: 06:50
+  Avrg T: +18.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 22:
+  Date: 2023-01-24
+  Min T: +17.5, TS Min T: 19:59
+  Max T: +19.4, TS Max T: 06:15
+  Avrg T: +18.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 23:
+  Date: 2023-01-23
+  Min T: +16.2, TS Min T: 00:00
+  Max T: +18.3, TS Max T: 23:43
+  Avrg T: +17.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 24:
+  Date: 2023-01-22
+  Min T: +15.5, TS Min T: 00:00
+  Max T: +17.0, TS Max T: 05:09
+  Avrg T: +16.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 25:
+  Date: 2023-01-21
+  Min T: +15.2, TS Min T: 23:00
+  Max T: +17.1, TS Max T: 12:12
+  Avrg T: +16.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 26:
+  Date: 2023-01-20
+  Min T: +15.0, TS Min T: 21:57
+  Max T: +17.2, TS Max T: 11:24
+  Avrg T: +16.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 27:
+  Date: 2023-01-19
+  Min T: +14.7, TS Min T: 21:49
+  Max T: +16.5, TS Max T: 09:50
+  Avrg T: +15.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 28:
+  Date: 2023-01-18
+  Min T: +15.1, TS Min T: 20:01
+  Max T: +17.3, TS Max T: 05:32
+  Avrg T: +16.3
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 29:
+  Date: 2023-01-17
+  Min T: +15.6, TS Min T: 20:11
+  Max T: +17.8, TS Max T: 06:23
+  Avrg T: +16.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 30:
+  Date: 2023-01-16
+  Min T: +15.5, TS Min T: 00:00
+  Max T: +17.1, TS Max T: 09:59
+  Avrg T: +16.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 31:
+  Date: 2023-01-15
+  Min T: +15.1, TS Min T: 23:07
+  Max T: +17.3, TS Max T: 12:09
+  Avrg T: +16.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 32:
+  Date: 2023-01-14
+  Min T: +16.3, TS Min T: 22:32
+  Max T: +17.7, TS Max T: 04:31
+  Avrg T: +17.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 33:
+  Date: 2023-01-13
+  Min T: +16.1, TS Min T: 21:40
+  Max T: +17.3, TS Max T: 11:51
+  Avrg T: +16.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 34:
+  Date: 2023-01-12
+  Min T: +15.9, TS Min T: 21:40
+  Max T: +18.0, TS Max T: 05:39
+  Avrg T: +17.1
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 35:
+  Date: 2023-01-11
+  Min T: +16.5, TS Min T: 21:02
+  Max T: +18.6, TS Max T: 09:43
+  Avrg T: +17.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 36:
+  Date: 2023-01-10
+  Min T: +16.1, TS Min T: 20:35
+  Max T: +17.9, TS Max T: 05:01
+  Avrg T: +17.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 37:
+  Date: 2023-01-09
+  Min T: +15.7, TS Min T: 21:13
+  Max T: +17.1, TS Max T: 10:23
+  Avrg T: +16.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 38:
+  Date: 2023-01-08
+  Min T: +15.5, TS Min T: 22:45
+  Max T: +17.1, TS Max T: 06:13
+  Avrg T: +16.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 39:
+  Date: 2023-01-07
+  Min T: +15.7, TS Min T: 22:38
+  Max T: +17.0, TS Max T: 01:32
+  Avrg T: +16.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 40:
+  Date: 2023-01-06
+  Min T: +16.4, TS Min T: 21:47
+  Max T: +18.3, TS Max T: 06:11
+  Avrg T: +17.6
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 41:
+  Date: 2023-01-05
+  Min T: +17.3, TS Min T: 20:57
+  Max T: +18.5, TS Max T: 12:57
+  Avrg T: +17.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 42:
+  Date: 2023-01-04
+  Min T: +16.3, TS Min T: 00:00
+  Max T: +18.0, TS Max T: 23:43
+  Avrg T: +17.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 43:
+  Date: 2023-01-03
+  Min T: +15.1, TS Min T: 20:40
+  Max T: +17.2, TS Max T: 06:28
+  Avrg T: +16.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 44:
+  Date: 2023-01-02
+  Min T: +15.8, TS Min T: 21:01
+  Max T: +17.4, TS Max T: 10:18
+  Avrg T: +16.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 45:
+  Date: 2023-01-01
+  Min T: +16.1, TS Min T: 22:12
+  Max T: +17.5, TS Max T: 07:46
+  Avrg T: +16.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 46:
+  Date: 2022-12-31
+  Min T: +16.0, TS Min T: 22:54
+  Max T: +17.8, TS Max T: 06:02
+  Avrg T: +17.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 47:
+  Date: 2022-12-30
+  Min T: +16.0, TS Min T: 20:33
+  Max T: +17.6, TS Max T: 08:33
+  Avrg T: +16.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 48:
+  Date: 2022-12-29
+  Min T: +16.1, TS Min T: 21:01
+  Max T: +17.6, TS Max T: 07:44
+  Avrg T: +17.0
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 49:
+  Date: 2022-12-28
+  Min T: +16.1, TS Min T: 20:21
+  Max T: +17.3, TS Max T: 06:22
+  Avrg T: +16.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 50:
+  Date: 2022-12-27
+  Min T: +15.6, TS Min T: 20:36
+  Max T: +17.5, TS Max T: 09:19
+  Avrg T: +16.6
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 51:
+  Date: 2022-12-26
+  Min T: +16.0, TS Min T: 21:15
+  Max T: +18.0, TS Max T: 08:05
+  Avrg T: +17.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 52:
+  Date: 2022-12-25
+  Min T: +16.0, TS Min T: 22:15
+  Max T: +17.4, TS Max T: 04:52
+  Avrg T: +16.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 53:
+  Date: 2022-12-24
+  Min T: +16.2, TS Min T: 22:35
+  Max T: +17.8, TS Max T: 12:00
+  Avrg T: +17.1
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 54:
+  Date: 2022-12-23
+  Min T: +16.6, TS Min T: 23:06
+  Max T: +19.0, TS Max T: 08:16
+  Avrg T: +18.1
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 55:
+  Date: 2022-12-22
+  Min T: +16.5, TS Min T: 21:00
+  Max T: +18.3, TS Max T: 05:55
+  Avrg T: +17.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 56:
+  Date: 2022-12-21
+  Min T: +15.8, TS Min T: 20:40
+  Max T: +17.8, TS Max T: 03:03
+  Avrg T: +17.0
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 57:
+  Date: 2022-12-20
+  Min T: +17.1, TS Min T: 21:19
+  Max T: +19.4, TS Max T: 06:29
+  Avrg T: +18.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 58:
+  Date: 2022-12-19
+  Min T: +15.5, TS Min T: 00:00
+  Max T: +17.9, TS Max T: 23:55
+  Avrg T: +17.1
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 59:
+  Date: 2022-12-18
+  Min T: +15.1, TS Min T: 00:00
+  Max T: +17.7, TS Max T: 06:24
+  Avrg T: +16.7
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 60:
+  Date: 2022-12-17
+  Min T: +15.1, TS Min T: 23:22
+  Max T: +17.3, TS Max T: 09:54
+  Avrg T: +16.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+Cert:
+ Vers: 1.0
+ Lot: 1792_20_08
+ Issuer: Berlinger & Co. AG
+ Valid from: 2020-08-21 07:39
+ Owner: Berlinger & Co. AG
+ Public Key: d73cd26b379bd0a250d98498e15c739ab53594e9768b247a0713637cba30e474b4fcc1aae45f30ec7cc878c102cf9648d775670d2f93b48726a0f21d3ca71074
+Sig Cert: 6eef7b154b51a1f4a4186e76b495d43dc25cedbaab8b18486895df5d773530795679b8aa3678e511e45e28cb894bcc051dd90d13f19f699c4f42b46c4ed5d621
+Sig: c529ddd52ad291ea3b2e31fdff6c3432bc259e49a3b9da309f256d2b96a5884d9f275864440907ea3f44d5fa70d94ade51b8b46e7ef9f3f3687b40de881fe71f

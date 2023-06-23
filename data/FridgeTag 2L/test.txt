@@ -1,0 +1,593 @@
+Device: Q-tag Fridge-tag 2 L
+Vers: 0.5
+Fw Vers: 4.0p0o
+Sensor: 1
+Conf:
+ Serial: 130500109088
+ PCB: V70603211312
+ CID: 11
+ Lot: 1794_20_08
+ Zone: 0.00
+ Measurement delay: 10
+ Moving Avrg: 1
+ User Alarm Config: 0
+ User Clock Config: 1
+ Alarm Indication: 1
+ Temp unit: C
+ Alarm:
+  0:
+   T AL: +2.0, t AL: 60
+  1:
+   T AL: +8.0, t AL: 60
+ Int Sensor:
+  Timeout: 1, Offset: +0.0
+ Report history length: 56
+ Det Report: 19
+ Use ext devices: 0
+ Logging Interval: 5
+ Test Res: 1, Test TS: 2022-02-02 07:00
+Hist:
+ TS Actv: 2022-05-02 04:44
+ TS Report Creation: 2022-06-08 10:14
+ 1:
+  Date: 2022-06-08
+  Min T: +4.0, TS Min T: 00:42
+  Max T: +6.2, TS Max T: 09:52
+  Avrg T: +4.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 2:
+  Date: 2022-06-07
+  Min T: +4.1, TS Min T: 20:33
+  Max T: +30.3, TS Max T: 16:50
+  Avrg T: +9.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 312, TS A: 14:55, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 3:
+  Date: 2022-06-06
+  Min T: -7.2, TS Min T: 09:50
+  Max T: +30.3, TS Max T: 15:17
+  Avrg T: +5.5
+  Alarm:
+   0:
+    t Acc: 753, TS A: 00:00, C A: 0
+   1:
+    t Acc: 408, TS A: 13:35, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 4:
+  Date: 2022-06-05
+  Min T: -6.5, TS Min T: 08:58
+  Max T: -5.8, TS Max T: 00:00
+  Avrg T: -6.2
+  Alarm:
+   0:
+    t Acc: 1440, TS A: 00:00, C A: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 5:
+  Date: 2022-06-04
+  Min T: -6.1, TS Min T: 09:09
+  Max T: -5.6, TS Max T: 00:00
+  Avrg T: -5.7
+  Alarm:
+   0:
+    t Acc: 1440, TS A: 00:00, C A: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 6:
+  Date: 2022-06-03
+  Min T: -5.8, TS Min T: 07:48
+  Max T: +30.0, TS Max T: 16:39
+  Avrg T: -0.5
+  Alarm:
+   0:
+    t Acc: 1241, TS A: 00:00, C A: 0
+   1:
+    t Acc: 190, TS A: 16:30, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 7:
+  Date: 2022-06-02
+  Min T: -7.0, TS Min T: 07:24
+  Max T: -0.4, TS Max T: 15:19
+  Avrg T: -5.0
+  Alarm:
+   0:
+    t Acc: 1440, TS A: 00:00, C A: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 8:
+  Date: 2022-06-01
+  Min T: -8.4, TS Min T: 08:11
+  Max T: +1.3, TS Max T: 11:19
+  Avrg T: -5.9
+  Alarm:
+   0:
+    t Acc: 1440, TS A: 00:00, C A: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 9:
+  Date: 2022-05-31
+  Min T: -8.2, TS Min T: 08:52
+  Max T: +0.6, TS Max T: 10:16
+  Avrg T: -5.8
+  Alarm:
+   0:
+    t Acc: 1440, TS A: 00:00, C A: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 10:
+  Date: 2022-05-30
+  Min T: -7.5, TS Min T: 23:32
+  Max T: +28.5, TS Max T: 16:20
+  Avrg T: -2.7
+  Alarm:
+   0:
+    t Acc: 1356, TS A: 00:00, C A: 0
+   1:
+    t Acc: 75, TS A: 16:18, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 16
+  Checked:
+   TS PM: 15:45
+ 11:
+  Date: 2022-05-29
+  Min T: -5.4, TS Min T: 08:46
+  Max T: -4.1, TS Max T: 09:49
+  Avrg T: -4.9
+  Alarm:
+   0:
+    t Acc: 1440, TS A: 00:00, C A: 1
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 12:
+  Date: 2022-05-28
+  Min T: -5.1, TS Min T: 08:45
+  Max T: +3.6, TS Max T: 15:31
+  Avrg T: -4.0
+  Alarm:
+   0:
+    t Acc: 1399, TS A: 00:00, C A: 1
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 13:
+  Date: 2022-05-27
+  Min T: -3.8, TS Min T: 23:56
+  Max T: +22.6, TS Max T: 08:55
+  Avrg T: +10.1
+  Alarm:
+   0:
+    t Acc: 441, TS A: 18:28, C A: 0
+   1:
+    t Acc: 672, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 14:
+  Date: 2022-05-26
+  Min T: +7.5, TS Min T: 05:25
+  Max T: +21.4, TS Max T: 23:59
+  Avrg T: +12.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1291, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 15:
+  Date: 2022-05-25
+  Min T: +7.7, TS Min T: 18:27
+  Max T: +11.3, TS Max T: 22:11
+  Avrg T: +9.3
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1401, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 16:
+  Date: 2022-05-24
+  Min T: +5.0, TS Min T: 13:15
+  Max T: +24.6, TS Max T: 00:00
+  Avrg T: +15.3
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1254, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 17:
+  Date: 2022-05-23
+  Min T: +24.3, TS Min T: 18:53
+  Max T: +25.6, TS Max T: 11:57
+  Avrg T: +24.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 18:
+  Date: 2022-05-22
+  Min T: +25.3, TS Min T: 22:05
+  Max T: +26.5, TS Max T: 00:00
+  Avrg T: +25.7
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 19:
+  Date: 2022-05-21
+  Min T: +25.5, TS Min T: 08:33
+  Max T: +26.5, TS Max T: 20:05
+  Avrg T: +25.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 20:
+  Date: 2022-05-20
+  Min T: +19.0, TS Min T: 00:00
+  Max T: +26.3, TS Max T: 21:31
+  Avrg T: +24.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 21:
+  Date: 2022-05-19
+  Min T: +8.7, TS Min T: 07:57
+  Max T: +19.0, TS Max T: 23:55
+  Avrg T: +11.3
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 22:
+  Date: 2022-05-18
+  Min T: +8.8, TS Min T: 08:37
+  Max T: +14.5, TS Max T: 10:52
+  Avrg T: +10.2
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 1440, TS A: 00:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 23:
+  Date: 2022-05-17
+  Min T: +4.9, TS Min T: 06:33
+  Max T: +11.9, TS Max T: 14:05
+  Avrg T: +8.0
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 743, TS A: 13:02, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 24:
+  Date: 2022-05-16
+  Min T: +5.0, TS Min T: 06:49
+  Max T: +9.1, TS Max T: 11:44
+  Avrg T: +6.3
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 186, TS A: 11:26, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 25:
+  Date: 2022-05-15
+  Min T: +5.3, TS Min T: 07:33
+  Max T: +6.6, TS Max T: 00:22
+  Avrg T: +5.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 26:
+  Date: 2022-05-14
+  Min T: +5.0, TS Min T: 07:06
+  Max T: +6.6, TS Max T: 16:30
+  Avrg T: +5.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 27:
+  Date: 2022-05-13
+  Min T: +5.1, TS Min T: 06:50
+  Max T: +6.5, TS Max T: 16:02
+  Avrg T: +5.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 28:
+  Date: 2022-05-12
+  Min T: +5.4, TS Min T: 23:24
+  Max T: +10.1, TS Max T: 16:48
+  Avrg T: +6.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 272, TS A: 13:27, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 29:
+  Date: 2022-05-11
+  Min T: +5.6, TS Min T: 18:47
+  Max T: +8.3, TS Max T: 14:01
+  Avrg T: +6.5
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 21
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 30:
+  Date: 2022-05-10
+  Min T: +6.0, TS Min T: 05:51
+  Max T: +9.2, TS Max T: 13:21
+  Avrg T: +6.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 147
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 31:
+  Date: 2022-05-09
+  Min T: +5.3, TS Min T: 05:54
+  Max T: +8.2, TS Max T: 11:08
+  Avrg T: +6.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 13
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 32:
+  Date: 2022-05-08
+  Min T: +5.1, TS Min T: 04:07
+  Max T: +6.3, TS Max T: 19:05
+  Avrg T: +5.6
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 33:
+  Date: 2022-05-07
+  Min T: +4.8, TS Min T: 06:18
+  Max T: +6.0, TS Max T: 16:12
+  Avrg T: +5.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 34:
+  Date: 2022-05-06
+  Min T: +4.5, TS Min T: 08:20
+  Max T: +6.9, TS Max T: 14:06
+  Avrg T: +5.3
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 35:
+  Date: 2022-05-05
+  Min T: +5.0, TS Min T: 23:08
+  Max T: +12.4, TS Max T: 15:20
+  Avrg T: +7.1
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 385, TS A: 11:00, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 36:
+  Date: 2022-05-04
+  Min T: +5.2, TS Min T: 09:23
+  Max T: +8.2, TS Max T: 10:41
+  Avrg T: +6.0
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 14
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 37:
+  Date: 2022-05-03
+  Min T: +3.2, TS Min T: 07:10
+  Max T: +26.2, TS Max T: 10:18
+  Avrg T: +5.8
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 84, TS A: 10:32, C A: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 38:
+  Date: 2022-05-02
+  Min T: +3.5, TS Min T: 23:53
+  Max T: +27.5, TS Max T: 10:36
+  Avrg T: +5.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 42
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 10
+  Checked:
+   TS AM: 10:33
+Data:
+	yyyy-MM-dd hh:mm	T	Out of limits
+	2022-05-02 04:44	26.3	x
+	2022-05-02 10:36	27.5	x
+	2022-05-02 10:41	26.8	x
+	2022-05-02 10:46	26.9	x
+	2022-05-02 10:51	19.2	x
+	2022-05-02 10:56	14.2	x
+	2022-05-02 11:01	11.8	x
+	2022-05-02 11:06	10.0	x
+	2022-05-02 11:11	8.5	x
+	2022-05-02 11:16	7.3
+	2022-05-02 11:21	6.3
+	2022-05-02 11:26	5.5
+	2022-05-02 11:31	4.9
+	2022-05-02 11:36	4.5
+	2022-05-02 11:41	4.3
+	2022-05-12 13:26	8.3	x
+	2022-05-12 13:31	8.4	x
+	2022-05-12 13:36	8.6	x
+	2022-05-12 13:41	9.1	x
+	2022-05-12 13:46	9.5	x
+	2022-05-12 13:51	9.7	x
+	2022-05-12 13:56	9.7	x
+	2022-05-12 14:01	9.6	x
+	2022-05-12 14:06	9.6	x
+	2022-05-12 14:11	9.5	x
+	2022-05-12 14:16	9.5	x
+	2022-05-12 14:21	9.3	x
+	2022-05-12 14:26	9.2	x
+	2022-05-12 14:31	9.1	x
+	2022-05-12 14:36	9.0	x
+	2022-05-12 14:41	8.8	x
+	2022-05-12 14:46	8.6	x
+	2022-05-12 14:51	8.4	x
+	2022-05-12 14:56	8.2	x
+	2022-05-12 15:01	8.0
+	2022-05-12 15:06	7.8
+	2022-05-12 15:11	7.6
+	2022-05-12 15:16	7.5
+	2022-05-12 15:21	7.5
+	2022-05-12 15:26	7.7
+	2022-05-12 15:31	7.8
+	2022-05-12 15:36	8.0
+	2022-05-12 15:41	8.2	x
+	2022-05-12 15:46	8.3	x
+	2022-05-12 15:51	8.3	x
+	2022-05-12 15:56	8.1	x
+	2022-05-12 16:01	8.0
+	2022-05-12 16:06	7.8
+	2022-05-12 16:11	7.5
+	2022-05-12 16:16	7.3
+	2022-06-08 10:01	5.7
+	2022-06-08 10:06	5.5
+	2022-06-08 10:11	5.7
+Cert:
+ Vers: 1.0
+ Lot: 1794_20_08
+ Issuer: Berlinger & Co. AG
+ Valid from: 2020-08-21 07:43
+ Owner: Berlinger & Co. AG
+ Public Key: 498b6848d4bc66bc7cc98e2e9d5d063dd9682c9bc5602a1180a0a8609a047d0dc437de3cbd42ee9ada367b22ad2cd47762c93bb8ab7a9456772ce9f11d69fa12
+Sig Cert: 197edae79b86489398f72190f0020d69979e58cb242d232e6a0f11cb33beb982a7078cacec3b85d5a4d8425ce69b815af4aa62fd645d3957f4f7e18accea8af1
+Sig: af59f0d50fc21ad82171ab87ebdb7b8d7c6de1138245fdfa4f19ad5f447039969f511f4e8e8c2ba37a79e0106f99106e1853b5ed7fc9eed9dda11ab33a0523a1

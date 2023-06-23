@@ -1,0 +1,106 @@
+Device: Q-tag Fridge-tag 2
+Vers: 0.5
+Fw Vers: 3.4p0o
+Sensor: 1
+Ext Sensor: 99
+Conf:
+ Serial: 130400191544
+ PCB: BG0214402648
+ CID: 1014
+ Lot: 1792_20_08
+ Zone: 0.00
+ Measurement delay: 10
+ Moving Avrg: 1
+ User Alarm Config: 0
+ User Clock Config: 1
+ Alarm Indication: 0
+ Temp unit: C
+ Alarm:
+  0:
+   T AL: -0.5, t AL: 60
+  1:
+   T AL: +8.0, t AL: 600
+ Ext Sensor:
+  Timeout: 10, Offset: +0.0
+ Int Sensor:
+  Timeout: 1, Offset: +0.0
+ Report history length: 60
+ Det Report: 19
+ Use ext devices: 1
+ Test Res: 1, Test TS: 2022-02-02 06:57
+Hist:
+ TS Actv: 2023-04-17 16:43
+ TS Report Creation: 2023-04-20 15:14
+ 1:
+  Date: 2023-04-20
+  Min T: +2.0, TS Min T: 13:30
+  Max T: +8.0, TS Max T: 14:33
+  Avrg T: +4.6
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Ext Sensor timeout:
+   t AccST: 21, TS ST: 15:04
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 16
+  Checked:
+   TS PM: 15:13
+ 2:
+  Date: 2023-04-19
+  Min T: +1.5, TS Min T: 18:44
+  Max T: +7.1, TS Max T: 17:38
+  Avrg T: +3.9
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 0
+  Ext Sensor timeout:
+   t AccST: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 3:
+  Date: 2023-04-18
+  Min T: +1.9, TS Min T: 14:08
+  Max T: +8.5, TS Max T: 13:18
+  Avrg T: +4.0
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 2
+  Ext Sensor timeout:
+   t AccST: 0
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 0
+ 4:
+  Date: 2023-04-17
+  Min T: +2.3, TS Min T: 20:11
+  Max T: +20.8, TS Max T: 19:41
+  Avrg T: +4.4
+  Alarm:
+   0:
+    t Acc: 0
+   1:
+    t Acc: 8
+  Ext Sensor timeout:
+   t AccST: 178, TS ST: 16:53
+  Int Sensor timeout:
+   t AccST: 0
+  Events: 16
+  Checked:
+   TS PM: 19:39
+Cert:
+ Vers: 1.0
+ Lot: 1792_20_08
+ Issuer: Berlinger & Co. AG
+ Valid from: 2020-08-21 07:39
+ Owner: Berlinger & Co. AG
+ Public Key: d73cd26b379bd0a250d98498e15c739ab53594e9768b247a0713637cba30e474b4fcc1aae45f30ec7cc878c102cf9648d775670d2f93b48726a0f21d3ca71074
+Sig Cert: 6eef7b154b51a1f4a4186e76b495d43dc25cedbaab8b18486895df5d773530795679b8aa3678e511e45e28cb894bcc051dd90d13f19f699c4f42b46c4ed5d621
+Sig: 83847cd9b0766014ecbf0bdb667df76d9a78751bf86ab662df85c6e45175ac2f0a0ec2d9bbbb67a6100681472816f5ce32b82f97b4512530be038857466a6dd3
