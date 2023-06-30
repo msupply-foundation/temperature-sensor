@@ -1,6 +1,6 @@
 use chrono::{NaiveDateTime, Duration};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 // define the types encountered when parsing a sensor text file (e.g. Berlinger) 
 pub enum SensorFieldType {
     Text(String),
@@ -11,7 +11,7 @@ pub enum SensorFieldType {
     Timestamp(NaiveDateTime),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 // define the four types of breach
 pub enum BreachType {
     HotConsecutive,
@@ -20,20 +20,20 @@ pub enum BreachType {
     ColdCumulative,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 // define the sensor types supported
 pub enum SensorType {
     Berlinger,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 // define the structure used to capture a temperature log
 pub struct TemperatureLog {
     pub temperature: f64,
     pub timestamp : NaiveDateTime,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 // define the structure used to capture a breach config
 pub struct TemperatureBreachConfig {
     pub breach_type: BreachType,
@@ -42,7 +42,7 @@ pub struct TemperatureBreachConfig {
     pub duration: Duration,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 // define the structure used to capture a temperature breach
 pub struct TemperatureBreach {
     pub breach_type: BreachType,
@@ -52,7 +52,7 @@ pub struct TemperatureBreach {
     pub acknowledged: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 // define the structure used to capture sensor details (incomplete)
 pub struct Sensor {
     pub sensor_type: SensorType,

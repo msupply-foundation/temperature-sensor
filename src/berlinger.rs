@@ -1,10 +1,13 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use serde_json::map::Values;
 //use json::JsonValue::Null;
 use serde_json::{json, Value};
 use chrono::{NaiveDateTime,NaiveDate,NaiveTime,Duration};
 use temperature_sensor::{Sensor,SensorType,BreachType,TemperatureLog,TemperatureBreach,TemperatureBreachConfig};
+
+//use crate::berlinger;
 
 #[derive(Debug)]
 enum SensorSubType {
@@ -34,11 +37,17 @@ fn read_sensor_to_json (file_path: &str) -> Value {
     let mut marker_timestamps: Vec<Value> = Vec::new();
     let mut marker_temperatures: Vec<Value> = Vec::new();
     let mut marker_numbers: Vec<Value> = Vec::new();
+    let mut breach_start_timestamps: Vec<Value> = Vec::new();
+    let mut breach_end_timestamps: Vec<Value> = Vec::new();
+    let mut breach_durations: Vec<Value> = Vec::new();
+    let mut breach_temperatures: Vec<Value> = Vec::new();
+    let mut breach_timestamps: Vec<Value> = Vec::new();
+    let mut breach_activation_timestamps: Vec<Value> = Vec::new();
     let mut level_1 = String::new();
     let mut level_2 = String::new();
     let mut level_3 = String::new();
     let mut level_4 = String::new();
-    let mut json_tag = "";
+    let mut json_tag = String::new();
     let mut json_value = "";
 
     if let Ok(lines) = read_lines(file_path) {
@@ -54,30 +63,48 @@ fn read_sensor_to_json (file_path: &str) -> Value {
                     
                     let json_elements: Vec<&str> = element.trim().split(": ").collect();
                     let last_char = json_elements[0].chars().last().unwrap();
+                    let mut new_level = false;
+                    let element_count = json_elements.len();
 
-                    json_tag = json_elements[0];
+                    json_tag = json_elements[0].to_string();
 
-                    if last_char == ':' { // start of new level
+                    if last_char == ':' {
+
+                        json_tag.pop(); // remove trailing :
                         
-                        json_tag = &json_tag[0..(json_tag.len()-1)]; // remove trailing :
+                        if element_count == 1 { // new level if only one element in the line
+                            new_level = true;
+                        }
+                    }
+
+                    if new_level { // start of new level
 
                         match level {
                             0 => {
-                                level_1 = json_tag.to_string();
+                                level_1 = json_tag.clone();
                                 if level_1 != "Data" && level_1 != "Marker" {
                                     current_json[level_1.clone()] = json!({});
                                 }
                             }
                             1 => {
-                                level_2 = json_tag.to_string();
+                                level_2 = json_tag.clone();
                                 current_json[level_1.clone()][level_2.clone()] = json!({});
                             }
                             2 => {
-                                level_3 = json_tag.to_string();
+                                if level_1 == "Res" && level_2 == "Alarm" { // QTag can have multiple alarms for the same breach type
+                                    breach_start_timestamps = Vec::new();
+                                    breach_end_timestamps = Vec::new();
+                                    breach_durations = Vec::new();
+                                    breach_temperatures = Vec::new();
+                                    breach_timestamps = Vec::new();
+                                    breach_activation_timestamps = Vec::new();
+                                }
+                                level_3 = json_tag.clone();
                                 current_json[level_1.clone()][level_2.clone()][level_3.clone()] = json!({});
+
                             }
                             3 => {
-                                level_4 = json_tag.to_string();
+                                level_4 = json_tag.clone();
                                 current_json[level_1.clone()][level_2.clone()][level_3.clone()][level_4.clone()] = json!({});
                             }
                             _ => todo!()
@@ -85,16 +112,51 @@ fn read_sensor_to_json (file_path: &str) -> Value {
 
                     } else {
 
-                        if json_elements.len() > 1 { // regular line format
+                        if element_count > 1 { // regular line format
 
                             json_value = json_elements[1];
+                            println!("Value: {}, Tag: {}", json_value.to_string(), json_tag);
 
                             match level {
-                                0 => {current_json[json_tag.to_string()] = json_value.into()}
-                                1 => {current_json[level_1.clone()][json_tag.to_string()] = json_value.into()}
-                                2 => {current_json[level_1.clone()][level_2.clone()][json_tag.to_string()] = json_value.into()}
-                                3 => {current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag.to_string()] = json_value.into()}
-                                4 => {current_json[level_1.clone()][level_2.clone()][level_3.clone()][level_4.clone()][json_tag.to_string()] = json_value.into()}
+                                0 => {current_json[json_tag] = json_value.into()}
+                                1 => {current_json[level_1.clone()][json_tag] = json_value.into()}
+                                2 => {current_json[level_1.clone()][level_2.clone()][json_tag] = json_value.into()}
+                                3 => {
+                                    if level_1 == "Res" && level_2 == "Alarm" { // QTag breach
+                                        match json_tag.as_str() {
+                                            "TS S" => {
+                                                breach_start_timestamps.push(json_value.into());
+                                                current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag] = Value::Array(breach_start_timestamps.clone());
+                                            }
+                                            "TS E" => {
+                                                breach_end_timestamps.push(json_value.into());
+                                                current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag] = Value::Array(breach_end_timestamps.clone());
+                                            }
+                                            "t A" => {
+                                                breach_durations.push(json_value.into());
+                                                current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag] = Value::Array(breach_durations.clone());
+                                            }
+                                            "T M" => {
+                                                breach_temperatures.push(json_value.into());
+                                                current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag] = Value::Array(breach_temperatures.clone());
+                                            }
+                                            "TS M" => {
+                                                breach_timestamps.push(json_value.into());
+                                                current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag] = Value::Array(breach_timestamps.clone());
+                                            }
+                                            "TS A" => {
+                                                breach_activation_timestamps.push(json_value.into());
+                                                current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag] = Value::Array(breach_activation_timestamps.clone());
+                                            }
+                                            _=> todo!()
+                                        }
+                                    } else {
+                                        current_json[level_1.clone()][level_2.clone()][level_3.clone()][json_tag] = json_value.into()
+                                    }    
+                                }
+                                4 => {
+                                        current_json[level_1.clone()][level_2.clone()][level_3.clone()][level_4.clone()][json_tag] = json_value.into()
+                                }
                                 _=> todo!()
                             }
                         } else { // tab-delimited line format
@@ -194,7 +256,7 @@ fn parse_duration(json_str: &Value) -> Option<Duration> { // in minutes
 }
 
 fn parse_subtype(json_str: &Value) -> SensorSubType {
-    if parse_string(&json_str["Hist"]) == "" {
+    if json_str["Hist"].is_null() {
         SensorSubType::QTag
     } else {
         SensorSubType::FridgeTag
@@ -206,81 +268,118 @@ fn parse_breach_configs(json_str: &Value, sensor_subtype: &SensorSubType) -> Opt
     let mut breach_configs: Vec<TemperatureBreachConfig> = Vec::new();
     let max_breach_temperature = 100.0;
     let min_breach_temperature = -273.0;
-    let mut valid_config = true;
-    let mut cold_threshold = 0.0;
-    let mut cold_duration = Duration::seconds(0); 
-    let mut hot_threshold = 0.0;
-    let mut hot_duration = Duration::seconds(0); 
-
+    let mut max_temperature = 0.0;
+    let mut min_temperature = 0.0;
+    
     match sensor_subtype {
+
         SensorSubType::FridgeTag => {
             
-            if let Some(threshold) = parse_float(&json_str["0"]["T AL"]) {
-                cold_threshold = threshold;
-            } else {
-                valid_config = false;
-            }
-            
-            if let Some(duration) = parse_duration(&json_str["0"]["t AL"]) {
-                cold_duration = duration;
-            } else {
-                valid_config = false;
+            if let Some(temperature) = parse_float(&json_str["0"]["T AL"]) {
+
+                max_temperature = temperature;
+                min_temperature = min_breach_temperature;
+
+                if let Some(duration) = parse_duration(&json_str["0"]["t AL"]) {
+                    breach_configs.push(
+                        TemperatureBreachConfig{
+                            breach_type: BreachType::ColdConsecutive,
+                            maximum_temperature: max_temperature, 
+                            minimum_temperature: min_temperature, 
+                            duration: duration, 
+                        }
+                    );
+                    breach_configs.push(
+                        TemperatureBreachConfig{
+                            breach_type: BreachType::ColdCumulative,
+                            maximum_temperature: max_temperature, 
+                            minimum_temperature: min_temperature, 
+                            duration: duration, 
+                        }
+                    );
+                }
             }
 
-            if let Some(threshold) = parse_float(&json_str["1"]["T AL"]) {
-                hot_threshold = threshold;
-            } else {
-                valid_config = false;
-            }
-            
-            if let Some(duration) = parse_duration(&json_str["1"]["t AL"]) {
-                hot_duration = duration;
-            } else {
-                valid_config = false;
-            }
+            if let Some(temperature) = parse_float(&json_str["1"]["T AL"]) {
 
-            if valid_config {
-                breach_configs.push(
-                    TemperatureBreachConfig{
-                        breach_type: BreachType::ColdConsecutive,
-                        maximum_temperature: max_breach_temperature, 
-                        minimum_temperature: cold_threshold, 
-                        duration: cold_duration, 
-                    }
-                );
-                breach_configs.push(
-                    TemperatureBreachConfig{
-                        breach_type: BreachType::HotConsecutive,
-                        maximum_temperature: hot_threshold,
-                        minimum_temperature: min_breach_temperature, 
-                        duration: hot_duration, 
-                    }
-                );
-                breach_configs.push(
-                    TemperatureBreachConfig{
-                        breach_type: BreachType::ColdCumulative,
-                        maximum_temperature: max_breach_temperature, 
-                        minimum_temperature: cold_threshold, 
-                        duration: cold_duration, 
-                    }
-                );
-                breach_configs.push(
-                    TemperatureBreachConfig{
-                        breach_type: BreachType::HotCumulative,
-                        maximum_temperature: hot_threshold,
-                        minimum_temperature: min_breach_temperature, 
-                        duration: hot_duration, 
-                    }
-                )
+                min_temperature = temperature;
+                max_temperature = max_breach_temperature;
+
+                if let Some(duration) = parse_duration(&json_str["1"]["t AL"]) {
+                    breach_configs.push(
+                        TemperatureBreachConfig{
+                            breach_type: BreachType::HotConsecutive,
+                            maximum_temperature: max_temperature, 
+                            minimum_temperature: min_temperature, 
+                            duration: duration, 
+                        }
+                    );
+                    breach_configs.push(
+                        TemperatureBreachConfig{
+                            breach_type: BreachType::HotCumulative,
+                            maximum_temperature: max_temperature, 
+                            minimum_temperature: min_temperature, 
+                            duration: duration, 
+                        }
+                    );
+                }
             }
         },
         SensorSubType::QTag => {
-            todo!();
+
+            for config_index in 1..=5 {
+
+                let json_config = &json_str[config_index.to_string()];
+ 
+                if json_config.is_null() {
+                    continue;
+                } else {
+                    if let Some(temperature) = parse_float(&json_config["T AL"]) {
+                        if let Some(duration) = parse_duration(&json_config["t AL"]) {
+                            if let Some(breach_type) = parse_int(&json_config["Type"]) {
+                                
+                                let mut valid_config = true;
+                                let mut temperature_breach_type = BreachType::HotCumulative;
+
+                                match breach_type {
+                                    1 => {
+                                        max_temperature = temperature;
+                                        min_temperature = min_breach_temperature;
+                                    }
+                                    2 => {
+                                        min_temperature = temperature;
+                                        max_temperature = max_breach_temperature;
+                                    }
+                                    3 => {
+                                        max_temperature = temperature;
+                                        min_temperature = min_breach_temperature;
+                                    }
+                                    4 => {
+                                        min_temperature = temperature;
+                                        max_temperature = max_breach_temperature;
+                                    }
+                                    _=> valid_config = false,
+                                }
+
+                                if let Some(temperature_breach_type) = qtag_breach_type(breach_type) {
+                                    breach_configs.push(
+                                        TemperatureBreachConfig { 
+                                            breach_type: temperature_breach_type, 
+                                            maximum_temperature: max_temperature, 
+                                            minimum_temperature: min_temperature, 
+                                            duration: duration, 
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
-    //}
 
-    if valid_config {
+    if breach_configs.len() > 0 {
         Some(breach_configs)
     } else {
         None
@@ -329,7 +428,7 @@ fn parse_fridgetag_breach(json_breach: &Value, json_config: &Value, breach_date:
         let breach_start_timestamp = NaiveDateTime::new(breach_date,start_time);
 
         let temperature_breach = TemperatureBreach{
-            breach_type: BreachType::ColdCumulative, // default - overridden in calling function
+            breach_type: BreachType::HotCumulative, // default - overridden in calling function
             start_timestamp: breach_start_timestamp,
             end_timestamp: breach_start_timestamp + breach_duration,
             duration: breach_duration,
@@ -342,34 +441,77 @@ fn parse_fridgetag_breach(json_breach: &Value, json_config: &Value, breach_date:
 
 }
 
+fn qtag_breach_type(alarm_type: i64) -> Option<BreachType> {
+
+    match alarm_type {
+        1 => Some(BreachType::ColdConsecutive),
+        2 => Some(BreachType::HotConsecutive),
+        3 => Some(BreachType::ColdCumulative),
+        4 => Some(BreachType::HotCumulative),
+        _=> None,
+    }
+}
+
+fn parse_qtag_breach(json_breach: &Value, alarm_type: i64) -> Option<Vec<TemperatureBreach>> {
+
+    let mut temperature_breaches: Vec<TemperatureBreach> = Vec::new();
+    let mut breach_index = 1;
+    breach_index = 0;
+
+    loop {
+
+        if json_breach["t A"][breach_index].is_null() {
+            break;
+        } else {
+
+            if let Some(breach_duration) = parse_duration(&json_breach["t A"][breach_index]) {
+
+                if let Some(breach_start_timestamp) = parse_timestamp(&json_breach["TS S"][breach_index]) {
+
+                    let mut breach_end_timestamp = breach_start_timestamp+breach_duration;
+                    if let Some(breach_end) = parse_timestamp(&json_breach["TS E"][breach_index]) {
+                        breach_end_timestamp = breach_end;
+                    }
+
+                    if let Some(breach_type) = qtag_breach_type(alarm_type) {
+                        temperature_breaches.push(
+                            TemperatureBreach {
+                                breach_type: breach_type,
+                                start_timestamp: breach_start_timestamp,
+                                end_timestamp: breach_end_timestamp,
+                                duration: breach_duration,
+                                acknowledged: false, 
+                            }
+                        );
+                    }
+                }
+            }
+        }
+
+        breach_index = breach_index + 1;  
+    } 
+
+    if temperature_breaches.len() > 0 {
+        Some(temperature_breaches)
+    } else {
+        None
+    }
+}
+
 fn parse_breaches(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<TemperatureBreach>> {
     
     let mut breaches: Vec<TemperatureBreach> = Vec::new();
     let mut alarm_index = 1;
-    let mut alarm_root = "";
 
     match sensor_subtype {
         SensorSubType::FridgeTag => {
-            alarm_root = "Hist";
-        },
-        SensorSubType::QTag => {
-            alarm_root = "Res";
-        }
-    }
 
-    loop {
-
-        let json_alarm = &json_str[alarm_root][alarm_index.to_string()];
-
-        if json_str[alarm_root][alarm_index.to_string()].is_null() {
-            break;
-        } else {
-
-            alarm_index = alarm_index + 1;
- 
-            match sensor_subtype {
-                SensorSubType::FridgeTag => {
-            
+            loop {
+                let json_alarm = &json_str["Hist"][alarm_index.to_string()];
+                
+                if json_alarm.is_null() {
+                    break;
+                } else {
                     if let Some(breach_date) = parse_date(&json_alarm["Date"]) {
                         
                         if let Some(mut temperature_breach) = parse_fridgetag_breach(&json_alarm["Alarm"]["0"], &json_str["Conf"]["Alarm"]["0"], breach_date) {
@@ -382,9 +524,27 @@ fn parse_breaches(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Ve
                             breaches.push(temperature_breach);
                         }
                     }
-                },
-                SensorSubType::QTag => {
-                    todo!();
+                }
+                alarm_index = alarm_index + 1;
+            }
+        },
+        SensorSubType::QTag => {
+
+            for alarm_index in 1..=5 {
+
+                let json_alarm = &json_str["Res"]["Alarm"][alarm_index.to_string()];
+                
+                if json_alarm.is_null() {
+                    continue;
+                } else {
+                    if let Some(alarm_type) = parse_int(&json_str["Conf"]["Alarm"][alarm_index.to_string()]["Type"]) {
+                        
+                        if let Some(temperature_breaches) = parse_qtag_breach(&json_alarm, alarm_type) {
+                            for breach_index in 0..=temperature_breaches.len()-1 {
+                                breaches.push(temperature_breaches[breach_index].clone());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -395,7 +555,6 @@ fn parse_breaches(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Ve
     } else {
         None
     }
-
 }
 
 fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<TemperatureLog>> {
@@ -472,20 +631,19 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
         if json_str[log_root]["Temperature"][log_index].is_null() {
             break;
         } else {
-
-            log_index = log_index + 1;
-          
+       
             if let Some(log_timestamp) = parse_timestamp(&json_log["Timestamp"][log_index]) {
                         
                 if let Some(log_temperature) = parse_float(&json_log["Temperature"][log_index]) {
                         
                     let temperature_log = TemperatureLog {
-                                    timestamp: log_timestamp,
-                                    temperature: log_temperature,
-                                };
+                        timestamp: log_timestamp,
+                        temperature: log_temperature,
+                    };
                     logs.push(temperature_log);
                 }
             }
+            log_index = log_index + 1;
         }
     }
 
@@ -500,6 +658,9 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
 pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
 
     let file_as_json = read_sensor_to_json(file_path);
+
+    println!("JSON: {:?}",file_as_json.to_string().replace("\"", ""));
+
     let mut report_timestamp: Option<NaiveDateTime> = None;
     let sensor_subtype = parse_subtype(&file_as_json);
     
