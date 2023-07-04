@@ -1,8 +1,6 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use serde_json::map::Values;
-//use json::JsonValue::Null;
 use serde_json::{json, Value};
 use chrono::{NaiveDateTime,NaiveDate,NaiveTime,Duration};
 use temperature_sensor::{Sensor,SensorType,BreachType,TemperatureLog,TemperatureBreach,TemperatureBreachConfig};
@@ -113,7 +111,7 @@ fn read_sensor_to_json (file_path: &str) -> Value {
                         if element_count > 1 { // regular line format
 
                             json_value = json_elements[1];
-                            println!("Value: {}, Tag: {}", json_value.to_string(), json_tag);
+                            //println!("Value: {}, Tag: {}", json_value.to_string(), json_tag);
 
                             match level {
                                 0 => {current_json[json_tag] = json_value.into()}
