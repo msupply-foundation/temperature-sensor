@@ -333,9 +333,6 @@ fn parse_breach_configs(json_str: &Value, sensor_subtype: &SensorSubType) -> Opt
                     if let Some(temperature) = parse_float(&json_config["T AL"]) {
                         if let Some(duration) = parse_duration(&json_config["t AL"]) {
                             if let Some(breach_type) = parse_int(&json_config["Type"]) {
-                                
-                                let mut valid_config = true;
-                                let mut temperature_breach_type = BreachType::HotCumulative;
 
                                 match breach_type {
                                     1 => {
@@ -354,7 +351,10 @@ fn parse_breach_configs(json_str: &Value, sensor_subtype: &SensorSubType) -> Opt
                                         min_temperature = temperature;
                                         max_temperature = max_breach_temperature;
                                     }
-                                    _=> valid_config = false,
+                                    _=> { // never actually used
+                                        min_temperature = min_breach_temperature;
+                                        max_temperature = max_breach_temperature;
+                                    }
                                 }
 
                                 if let Some(temperature_breach_type) = qtag_breach_type(breach_type) {
