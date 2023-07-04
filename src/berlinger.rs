@@ -7,8 +7,6 @@ use serde_json::{json, Value};
 use chrono::{NaiveDateTime,NaiveDate,NaiveTime,Duration};
 use temperature_sensor::{Sensor,SensorType,BreachType,TemperatureLog,TemperatureBreach,TemperatureBreachConfig};
 
-//use crate::berlinger;
-
 #[derive(Debug)]
 enum SensorSubType {
     FridgeTag,
@@ -561,36 +559,24 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
     
     let mut logs: Vec<TemperatureLog> = Vec::new();
     let mut log_index = 1;
-    let mut log_root = "";
 
     // First get the max/min temperature logs which are part of the alarm data
 
     match sensor_subtype {
         SensorSubType::FridgeTag => {
-            log_root = "Hist";
-        },
-        SensorSubType::QTag => {
-            log_root = "Res";
-        }
-    }
 
-    loop {
+            loop {
 
-        let json_log = &json_str[log_root][log_index.to_string()];
-
-        if json_str[log_root][log_index.to_string()].is_null() {
-            break;
-        } else {
-
-            log_index = log_index + 1;
- 
-            match sensor_subtype {
-                SensorSubType::FridgeTag => {
-            
+                let json_log = &json_str["Hist"][log_index.to_string()];
+        
+                if json_log.is_null() {
+                    break;
+                } else {
+                           
                     if let Some(log_date) = parse_date(&json_log["Date"]) {
-                        
+                                
                         if let Some(temperature_max) = parse_float(&json_log["Max T"]) {
-                        
+                                
                             if let Some(temperature_max_time) = parse_time(&json_log["TS Max T"]) {
                                 let temperature_max_log = TemperatureLog {
                                     timestamp: NaiveDateTime::new(log_date,temperature_max_time),
@@ -600,7 +586,7 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
                             }
                         }
                         if let Some(temperature_min) = parse_float(&json_log["Min T"]) {
-                        
+                              
                             if let Some(temperature_min_time) = parse_time(&json_log["TS Min T"]) {
                                 let temperature_min_log = TemperatureLog {
                                     timestamp: NaiveDateTime::new(log_date,temperature_min_time),
@@ -610,37 +596,80 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
                             }
                         }                       
                     }
+                
+                    log_index = log_index + 1;
+                }
+            }
+        
+        },
+        SensorSubType::QTag => {
 
-                },
-                SensorSubType::QTag => {
-                    todo!();
+            if let Some(temperature_min) = parse_float(&json_str["Res"]["Min T"]) {
+                if let Some(timestamp_min) = parse_timestamp(&json_str["Res"]["TS Min T"]) {
+                    logs.push(TemperatureLog {
+                        timestamp: timestamp_min,
+                        temperature: temperature_min,
+                    })
+                }
+            }
+            if let Some(temperature_max) = parse_float(&json_str["Res"]["Max T"]) {
+                if let Some(timestamp_max) = parse_timestamp(&json_str["Res"]["TS Max T"]) {
+                    logs.push(TemperatureLog {
+                        timestamp: timestamp_max,
+                        temperature: temperature_max,
+                    })
+                }
+            }
+
+            for alarm_index in 1..=5 {
+
+                let json_alarm = &json_str["Res"]["Alarm"][alarm_index.to_string()];
+                
+                if json_alarm.is_null() {
+                    continue;
+                } else {
+
+                    log_index = 0;
+                    
+                    loop {       
+                        if json_alarm["T M"][log_index].is_null() {
+                            break;
+                        } else {
+                    
+                            if let Some(log_temperature) = parse_float(&json_alarm["T M"][log_index]) {
+                                if let Some(log_timestamp) = parse_timestamp(&json_alarm["TS M"][log_index]) {
+                                    logs.push(TemperatureLog {
+                                        timestamp: log_timestamp,
+                                        temperature: log_temperature,
+                                    })
+                                }
+                            }
+                        }                   
+                        log_index = log_index + 1;  
+                    }
                 }
             }
         }
     }
-
+   
     // Now process the raw temperature logs (if any)
 
     log_index = 0;
-    log_root = "Data";
   
     loop {
 
-        let json_log = &json_str[log_root];
+        let json_log = &json_str["Data"];
 
-        if json_str[log_root]["Temperature"][log_index].is_null() {
+        if json_log["Temperature"][log_index].is_null() {
             break;
         } else {
        
-            if let Some(log_timestamp) = parse_timestamp(&json_log["Timestamp"][log_index]) {
-                        
-                if let Some(log_temperature) = parse_float(&json_log["Temperature"][log_index]) {
-                        
-                    let temperature_log = TemperatureLog {
+            if let Some(log_timestamp) = parse_timestamp(&json_log["Timestamp"][log_index]) {          
+                if let Some(log_temperature) = parse_float(&json_log["Temperature"][log_index]) {                    
+                    logs.push(TemperatureLog {
                         timestamp: log_timestamp,
                         temperature: log_temperature,
-                    };
-                    logs.push(temperature_log);
+                    })
                 }
             }
             log_index = log_index + 1;
