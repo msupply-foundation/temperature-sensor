@@ -99,7 +99,7 @@ pub fn read_sensor() -> Result<()> {
         println!("Reading from input file: {}", input_path);
 
         if let Some(sensor) = berlinger::read_sensor_file(Some(&input_path)) {
-            let output_path = sensor.registration.clone();
+            let output_path = sensor.registration.clone()+"_output.txt";
             let mut output = File::create(&output_path)?;
             write!(output,"{}", format!("{:?}\n\n",sensor));
             println!("Output: {}",&output_path);
@@ -108,7 +108,7 @@ pub fn read_sensor() -> Result<()> {
         println!("Input file {} doesn't exist - try to read from USB", input_path);
 
         if let Some(sensor) = berlinger::read_sensor_file(None) {
-            let output_path = sensor.registration.clone();
+            let output_path = sensor.registration.clone()+"_output.txt";
             let mut output = File::create(&output_path)?;
             write!(output,"{}", format!("{:?}\n\n",sensor));
             println!("Output: {}",&output_path);
