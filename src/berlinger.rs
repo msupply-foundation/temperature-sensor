@@ -1,9 +1,11 @@
+
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use serde_json::{json, Value};
 use chrono::{NaiveDateTime,NaiveDate,NaiveTime,Duration};
-use temperature_sensor::{Sensor,SensorType,BreachType,TemperatureLog,TemperatureBreach,TemperatureBreachConfig};
+
+use crate::common::{Sensor,SensorType,BreachType,TemperatureLog,TemperatureBreach,TemperatureBreachConfig};
 
 #[derive(Debug)]
 enum SensorSubType {
@@ -43,8 +45,8 @@ fn read_sensor_to_json (file_path: &str) -> Value {
     let mut level_2 = String::new();
     let mut level_3 = String::new();
     let mut level_4 = String::new();
-    let mut json_tag = String::new();
-    let mut json_value = "";
+    let mut json_tag;// = String::new();
+    let mut json_value;// = "";
 
     if let Ok(lines) = read_lines(file_path) {
 
@@ -264,8 +266,8 @@ fn parse_breach_configs(json_str: &Value, sensor_subtype: &SensorSubType) -> Opt
     let mut breach_configs: Vec<TemperatureBreachConfig> = Vec::new();
     let max_breach_temperature = 100.0;
     let min_breach_temperature = -273.0;
-    let mut max_temperature = 0.0;
-    let mut min_temperature = 0.0;
+    let mut max_temperature;// = 0.0;
+    let mut min_temperature;// = 0.0;
     
     match sensor_subtype {
 
@@ -389,7 +391,7 @@ fn parse_fridgetag_breach(json_breach: &Value, json_config: &Value, breach_date:
     let mut config_duration = Duration::seconds(0);
     let zero_time = NaiveTime::parse_from_str("00:00", "%H:%M").unwrap();
     let mut start_time = zero_time;
-    let mut valid_breach = true;
+    let mut valid_breach;// = true;
 
     if let Some(duration) = parse_duration(&json_breach["t Acc"]) {
         breach_duration = duration;
@@ -451,7 +453,7 @@ fn qtag_breach_type(alarm_type: i64) -> Option<BreachType> {
 fn parse_qtag_breach(json_breach: &Value, alarm_type: i64) -> Option<Vec<TemperatureBreach>> {
 
     let mut temperature_breaches: Vec<TemperatureBreach> = Vec::new();
-    let mut breach_index = 1;
+    let mut breach_index;// = 1;
     breach_index = 0;
 
     loop {
@@ -682,34 +684,39 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
 
 }
 
-pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
+pub fn read_sensor_file(file_path: Option<&str>) -> Option<Sensor> {
 
-    let file_as_json = read_sensor_to_json(file_path);
-
-    println!("JSON: {:?}",file_as_json.to_string().replace("\"", ""));
-
-    let mut report_timestamp: Option<NaiveDateTime> = None;
-    let sensor_subtype = parse_subtype(&file_as_json);
+    if let None = file_path {
+        None
+    } else {
     
-    match sensor_subtype {
-        SensorSubType::FridgeTag => {
-            report_timestamp = parse_timestamp(&file_as_json["Hist"]["TS Report Creation"]);
-        },
-        SensorSubType::QTag => {
-             report_timestamp = parse_timestamp(&file_as_json["Res"]["TS Stop"]);
+        let file_as_json = read_sensor_to_json(file_path.unwrap());
+
+        println!("JSON: {:?}",file_as_json.to_string().replace("\"", ""));
+
+        let report_timestamp: Option<NaiveDateTime>;// = None;
+        let sensor_subtype = parse_subtype(&file_as_json);
+    
+        match sensor_subtype {
+            SensorSubType::FridgeTag => {
+                report_timestamp = parse_timestamp(&file_as_json["Hist"]["TS Report Creation"]);
+            },
+            SensorSubType::QTag => {
+                report_timestamp = parse_timestamp(&file_as_json["Res"]["TS Stop"]);
+            }
         }
+
+        let sensor = Sensor {
+            sensor_type: SensorType::Berlinger,
+            registration: parse_string(&file_as_json["Conf"]["Serial"]),
+            name: parse_string(&file_as_json["Device"]),
+            last_connected_timestamp: report_timestamp,
+            log_interval: parse_duration(&file_as_json["Conf"]["Logging Interval"]),
+            breaches: parse_breaches(&file_as_json, &sensor_subtype),
+            configs: parse_breach_configs(&file_as_json["Conf"]["Alarm"], &sensor_subtype),
+            logs: parse_logs(&file_as_json, &sensor_subtype),
+        };
+
+        Some(sensor)
     }
-
-    let sensor = Sensor {
-        sensor_type: SensorType::Berlinger,
-        registration: parse_string(&file_as_json["Conf"]["Serial"]),
-        name: parse_string(&file_as_json["Device"]),
-        last_connected_timestamp: report_timestamp,
-        log_interval: parse_duration(&file_as_json["Conf"]["Logging Interval"]),
-        breaches: parse_breaches(&file_as_json, &sensor_subtype),
-        configs: parse_breach_configs(&file_as_json["Conf"]["Alarm"], &sensor_subtype),
-        logs: parse_logs(&file_as_json, &sensor_subtype),
-    };
-
-    Some(sensor)
 }

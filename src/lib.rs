@@ -1,69 +1,14 @@
+pub mod berlinger;
+pub mod common;
+
+use crate::common::{Sensor,SensorType,BreachType,TemperatureLog,TemperatureBreach,TemperatureBreachConfig};
+
+use std::env;
+use std::fs::File;
+use std::io;
+use std::io::{Write, Result};
+use std::path::Path;
 use chrono::{NaiveDateTime, Duration};
-
-#[derive(Debug, Clone)]
-// define the types encountered when parsing a sensor text file (e.g. Berlinger) 
-pub enum SensorFieldType {
-    Text(String),
-    Float(f64),
-    Integer(i64),
-    Duration(Duration),
-    Boolean(bool),
-    Timestamp(NaiveDateTime),
-}
-
-#[derive(Debug, Clone)]
-// define the four types of breach
-pub enum BreachType {
-    HotConsecutive,
-    ColdConsecutive,
-    HotCumulative,
-    ColdCumulative,
-}
-
-#[derive(Debug, Clone)]
-// define the sensor types supported
-pub enum SensorType {
-    Berlinger,
-}
-
-#[derive(Debug, Clone)]
-// define the structure used to capture a temperature log
-pub struct TemperatureLog {
-    pub temperature: f64,
-    pub timestamp : NaiveDateTime,
-}
-
-#[derive(Debug, Clone)]
-// define the structure used to capture a breach config
-pub struct TemperatureBreachConfig {
-    pub breach_type: BreachType,
-    pub maximum_temperature: f64,
-    pub minimum_temperature: f64,
-    pub duration: Duration,
-}
-
-#[derive(Debug, Clone)]
-// define the structure used to capture a temperature breach
-pub struct TemperatureBreach {
-    pub breach_type: BreachType,
-    pub start_timestamp: NaiveDateTime,
-    pub end_timestamp: NaiveDateTime,
-    pub duration: Duration,
-    pub acknowledged: bool,
-}
-
-#[derive(Debug, Clone)]
-// define the structure used to capture sensor details (incomplete)
-pub struct Sensor {
-    pub sensor_type: SensorType,
-    pub registration: String,
-    pub name: String,
-    pub last_connected_timestamp: Option<NaiveDateTime>,
-    pub log_interval: Option<Duration>,
-    pub breaches: Option<Vec<TemperatureBreach>>,
-    pub configs: Option<Vec<TemperatureBreachConfig>>,
-    pub logs: Option<Vec<TemperatureLog>>,
-}
 
 pub fn sample_sensor() -> Sensor {
     
@@ -131,4 +76,49 @@ pub fn sample_sensor() -> Sensor {
     };
 
     sensor
+}
+
+pub fn read_sensor() -> Result<()> {
+
+    let args: Vec<String> = env::args().collect();
+    let mut input_string = String::new();
+
+    if args.len() > 1 {
+        input_string = args[1].clone();
+    } else {
+        println!("Please enter a file name");
+        io::stdin()
+            .read_line(&mut input_string)
+            .expect("Failed to read line");
+    }
+
+    let input_path = input_string.trim();
+    
+    if Path::new(&input_path).exists() {
+
+        println!("Reading from input file: {}", input_path);
+
+        if let Some(sensor) = berlinger::read_sensor_file(Some(&input_path)) {
+            let output_path = sensor.registration.clone();
+            let mut output = File::create(&output_path)?;
+            write!(output,"{}", format!("{:?}\n\n",sensor));
+            println!("Output: {}",&output_path);
+        }
+    } else {
+        println!("Input file {} doesn't exist - try to read from USB", input_path);
+
+        if let Some(sensor) = berlinger::read_sensor_file(None) {
+            let output_path = sensor.registration.clone();
+            let mut output = File::create(&output_path)?;
+            write!(output,"{}", format!("{:?}\n\n",sensor));
+            println!("Output: {}",&output_path);
+        }
+    }
+    
+    // Always generate sample
+    let sample_sensor = sample_sensor();
+    let sample_path = "Sample.txt";
+    let mut output = File::create(sample_path)?;
+    write!(output,"{}", format!("{:?}\n\n",sample_sensor))
+
 }
