@@ -1,7 +1,7 @@
-use chrono::{NaiveDateTime, Duration};
+use chrono::{Duration, NaiveDateTime};
 
 #[derive(Debug, Clone)]
-// define the types encountered when parsing a sensor text file (e.g. Berlinger) 
+// define the types encountered when parsing a sensor text file (e.g. Berlinger)
 pub enum SensorFieldType {
     Text(String),
     Float(f64),
@@ -30,7 +30,7 @@ pub enum SensorType {
 // define the structure used to capture a temperature log
 pub struct TemperatureLog {
     pub temperature: f64,
-    pub timestamp : NaiveDateTime,
+    pub timestamp: NaiveDateTime,
 }
 
 #[derive(Debug, Clone)]
