@@ -87,19 +87,12 @@ pub fn sample_sensor() -> Sensor {
 
 pub fn read_sensor() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    let mut input_string = String::new();
 
     if args.len() > 1 {
-        input_string = args[1].clone();
+        let single_sensor = berlinger::read_sensor_file(args[1].trim());
     } else {
-        println!("Please enter a file name");
-        io::stdin()
-            .read_line(&mut input_string)
-            .expect("Failed to read line");
-    }
-
-    let input_path = input_string.trim();
-    berlinger::read_sensor_file(&input_path);
+        let sensor_array = berlinger::read_sensors_from_usb();
+    };
 
     // Always generate sample
     let sample_sensor = sample_sensor();

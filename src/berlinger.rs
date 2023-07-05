@@ -2,8 +2,10 @@ use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use serde_json::{json, Value};
 use std::fs::File;
 use std::io;
+use std::fs;
 use std::io::{BufRead, Write};
 use std::path::Path;
+use rs_drivelist::drive_list;
 
 use crate::common::{
     BreachType, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig, TemperatureLog,
@@ -681,18 +683,10 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
 }
 
 pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
-    let mut sensor_read_ok = true;
-    let file_as_json: Value;
 
     if Path::new(file_path).exists() {
-        file_as_json = read_sensor_to_json(file_path);
-    } else {
-        println!("File {} not found - reading from  USB", file_path);
-        file_as_json = Value::Null;
-        sensor_read_ok = false;
-    }
 
-    if sensor_read_ok {
+        let file_as_json = read_sensor_to_json(file_path);
         //println!("JSON: {:?}", file_as_json.to_string().replace("\"", ""));
 
         let report_timestamp: Option<NaiveDateTime>; // = None;
@@ -726,6 +720,56 @@ pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
 
         Some(sensor)
     } else {
+        println!("File not found: {}",file_path);
         None
     }
 }
+
+pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
+
+    let mut sensors:Vec<Sensor> = Vec::new();
+
+    match drive_list() {
+        Err(err) => println!("No drives found: {}",err),
+        Ok(drives) => {
+            for drive_index in 0..drives.len() {
+
+                let mount_points = &drives[drive_index].mountpoints;
+                for partition_index in 0..mount_points.len() {
+                    let mount_point = &mount_points[partition_index];
+
+                    if mount_point.totalBytes < Some(8*1024*1024*1024) { // possible USB drive if < 8 GB
+
+                        if let Ok(entries) = fs::read_dir(&mount_point.path) {
+                            for entry in entries {
+                                if let Ok(entry) = entry {
+
+                                    if let Some(extension) = entry.path().extension() {
+                                        if extension == "txt" {
+                                            if let Some(txt_file_path) = entry.path().to_str() {
+                                                let pdf_file_path = txt_file_path.replace(".txt",".pdf");
+
+                                                if Path::new(&pdf_file_path).exists() { // must have a matching PDF
+                                                    if let Some(sensor) = read_sensor_file(txt_file_path) {
+                                                        sensors.push(sensor.clone())
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if sensors.len() > 0 {
+        Some(sensors)
+    } else {
+        None
+    }
+}
+
