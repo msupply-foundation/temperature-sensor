@@ -339,16 +339,16 @@ fn parse_breach_configs(
                 }
             }
         }
-        SensorSubType::QTag => {
+        SensorSubType::QTag => { // loop over fixed 5 alarms, but not all populated
             for config_index in 1..=5 {
                 let json_config = &json_str[config_index.to_string()];
 
-                if json_config.is_null() {
+                if json_config.is_null() { // skip blank alarm
                     continue;
                 } else {
-                    if let Some(temperature) = parse_float(&json_config["T AL"]) {
-                        if let Some(duration) = parse_duration(&json_config["t AL"]) {
-                            if let Some(breach_type) = parse_int(&json_config["Type"]) {
+                    if let Some(temperature) = parse_float(&json_config["T AL"]) { // breach temperature
+                        if let Some(duration) = parse_duration(&json_config["t AL"]) { // breach duration threshold
+                            if let Some(breach_type) = parse_int(&json_config["Type"]) { // breach type
                                 match breach_type {
                                     1 => { // COLD_CONSECUTIVE
                                         max_temperature = max_breach_temperature;
@@ -423,7 +423,7 @@ fn parse_fridgetag_breach(
         } else {
             valid_breach = false;
         }
-        // subtract breach duration from activation time to get start time 
+        // Subtract breach duration from activation time to get start time 
         if let Some(breach_time) = parse_time(&json_breach["TS A"]) { // breach activation time
             if breach_time > zero_time + config_duration { // need to add zero_time to duration to make it a NaiveTime
                 start_time = breach_time - config_duration
@@ -464,22 +464,22 @@ fn qtag_breach_type(alarm_type: i64) -> Option<BreachType> {
 fn parse_qtag_breach(json_breach: &Value, alarm_type: i64) -> Option<Vec<TemperatureBreach>> {
     let mut temperature_breaches: Vec<TemperatureBreach> = Vec::new();
     let mut breach_index; // = 1;
-    breach_index = 0;
+    breach_index = 0; // for some weird reason, it didn't work if I just initialised it to zero above??
 
-    loop {
+    loop { // loop as long as breach duration is valid
         if json_breach["t A"][breach_index].is_null() {
             break;
         } else {
-            if let Some(breach_duration) = parse_duration(&json_breach["t A"][breach_index]) {
+            if let Some(breach_duration) = parse_duration(&json_breach["t A"][breach_index]) { // breach duration
                 if let Some(breach_start_timestamp) =
-                    parse_timestamp(&json_breach["TS S"][breach_index])
+                    parse_timestamp(&json_breach["TS S"][breach_index]) // breach start timestamp
                 {
-                    let mut breach_end_timestamp = breach_start_timestamp + breach_duration;
+                    let mut breach_end_timestamp = breach_start_timestamp + breach_duration; // breach end timestamp is optional - default to start + duration
                     if let Some(breach_end) = parse_timestamp(&json_breach["TS E"][breach_index]) {
                         breach_end_timestamp = breach_end;
                     }
 
-                    if let Some(breach_type) = qtag_breach_type(alarm_type) {
+                    if let Some(breach_type) = qtag_breach_type(alarm_type) { // lookup breach type
                         temperature_breaches.push(TemperatureBreach {
                             breach_type: breach_type,
                             start_timestamp: breach_start_timestamp,
@@ -606,16 +606,16 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
             }
         },
         SensorSubType::QTag => {
-            if let Some(temperature_min) = parse_float(&json_str["Res"]["Min T"]) {
-                if let Some(timestamp_min) = parse_timestamp(&json_str["Res"]["TS Min T"]) {
+            if let Some(temperature_min) = parse_float(&json_str["Res"]["Min T"]) { // min temperature
+                if let Some(timestamp_min) = parse_timestamp(&json_str["Res"]["TS Min T"]) { // min timestamp
                     logs.push(TemperatureLog {
                         timestamp: timestamp_min,
                         temperature: temperature_min,
                     })
                 }
             }
-            if let Some(temperature_max) = parse_float(&json_str["Res"]["Max T"]) {
-                if let Some(timestamp_max) = parse_timestamp(&json_str["Res"]["TS Max T"]) {
+            if let Some(temperature_max) = parse_float(&json_str["Res"]["Max T"]) { // max temperature
+                if let Some(timestamp_max) = parse_timestamp(&json_str["Res"]["TS Max T"]) { // max timestamp
                     logs.push(TemperatureLog {
                         timestamp: timestamp_max,
                         temperature: temperature_max,
@@ -623,23 +623,23 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
                 }
             }
 
-            for alarm_index in 1..=5 {
+            for alarm_index in 1..=5 { // loop over 5 fixed alarms, not all populated
                 let json_alarm = &json_str["Res"]["Alarm"][alarm_index.to_string()];
 
-                if json_alarm.is_null() {
+                if json_alarm.is_null() { // skip blank alarm
                     continue;
                 } else {
                     log_index = 0;
 
-                    loop {
+                    loop { // can have multiple entries for the same alarm - loop while valid
                         if json_alarm["T M"][log_index].is_null() {
                             break;
                         } else {
                             if let Some(log_temperature) =
-                                parse_float(&json_alarm["T M"][log_index])
+                                parse_float(&json_alarm["T M"][log_index]) // alarm temperature
                             {
                                 if let Some(log_timestamp) =
-                                    parse_timestamp(&json_alarm["TS M"][log_index])
+                                    parse_timestamp(&json_alarm["TS M"][log_index]) // alarm timestamp
                                 {
                                     logs.push(TemperatureLog {
                                         timestamp: log_timestamp,
@@ -659,14 +659,14 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
 
     log_index = 0;
 
-    loop {
+    loop { // loop over logs in Data section until no longer valid
         let json_log = &json_str["Data"];
 
         if json_log["Temperature"][log_index].is_null() {
             break;
         } else {
-            if let Some(log_timestamp) = parse_timestamp(&json_log["Timestamp"][log_index]) {
-                if let Some(log_temperature) = parse_float(&json_log["Temperature"][log_index]) {
+            if let Some(log_timestamp) = parse_timestamp(&json_log["Timestamp"][log_index]) { // timestamp
+                if let Some(log_temperature) = parse_float(&json_log["Temperature"][log_index]) { // temperature
                     logs.push(TemperatureLog {
                         timestamp: log_timestamp,
                         temperature: log_temperature,
@@ -694,7 +694,7 @@ pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
         let report_timestamp: Option<NaiveDateTime>; // = None;
         let sensor_subtype = parse_subtype(&file_as_json);
 
-        match sensor_subtype {
+        match sensor_subtype { // last timestamp in different places depending on sensor type
             SensorSubType::FridgeTag => {
                 report_timestamp = parse_timestamp(&file_as_json["Hist"]["TS Report Creation"]);
             }
@@ -714,6 +714,7 @@ pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
             logs: parse_logs(&file_as_json, &sensor_subtype),
         };
 
+        // Generate output file for debugging/reference
         let output_path = "sensor_".to_owned() + &sensor.registration + "_output.txt";
         if let Some(mut output) = File::create(&output_path).ok() {
             write!(output, "{}", format!("{:?}\n\n", sensor));
@@ -731,29 +732,27 @@ pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
 
     let mut sensors:Vec<Sensor> = Vec::new();
 
-    
-
     match drive_list() {
         Err(err) => println!("No drives found: {}",err),
         Ok(drives) => {
-            for drive_index in 0..drives.len() {
+            for drive_index in 0..drives.len() { // loop over all detected drives
 
                 let mount_points = &drives[drive_index].mountpoints;
-                for partition_index in 0..mount_points.len() {
+                for partition_index in 0..mount_points.len() { // loop pver partitions
                     let mount_point = &mount_points[partition_index];
 
                     if mount_point.totalBytes < Some(8*1024*1024*1024) { // possible USB drive if < 8 GB
 
-                        if let Ok(entries) = fs::read_dir(&mount_point.path) {
+                        if let Ok(entries) = fs::read_dir(&mount_point.path) { // loop over files in the volume root
                             for entry in entries {
                                 if let Ok(entry) = entry {
 
                                     if let Some(extension) = entry.path().extension() {
-                                        if extension == "txt" {
+                                        if extension == "txt" { // might be a sensor txt file
                                             if let Some(txt_file_path) = entry.path().to_str() {
                                                 let pdf_file_path = txt_file_path.replace(".txt",".pdf");
 
-                                                if Path::new(&pdf_file_path).exists() { // must have a matching PDF
+                                                if Path::new(&pdf_file_path).exists() { // but only if it has a matching PDF
                                                     if let Some(sensor) = read_sensor_file(txt_file_path) {
                                                         sensors.push(sensor.clone())
                                                     }
