@@ -8,7 +8,6 @@ use crate::common::{
 use chrono::{Duration, NaiveDateTime};
 use std::env;
 use std::fs::File;
-use std::io;
 use std::io::{Result, Write};
 
 pub fn sample_sensor() -> Sensor {

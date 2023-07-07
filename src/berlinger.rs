@@ -517,7 +517,7 @@ fn parse_breaches(
                 break;
             } else {
                 if let Some(breach_date) = parse_date(&json_alarm["Date"]) { // breach date
-                    if let Some(mut temperature_breach) = parse_fridgetag_breach( // COLD_CUMULATIVE
+                    if let Some(temperature_breach) = parse_fridgetag_breach( // COLD_CUMULATIVE
                         &json_alarm["Alarm"]["0"],
                         &json_str["Conf"]["Alarm"]["0"],
                         breach_date,
@@ -526,7 +526,7 @@ fn parse_breaches(
                         breaches.push(temperature_breach);
                     }
 
-                    if let Some(mut temperature_breach) = parse_fridgetag_breach( // HOT_CUMULATIVE
+                    if let Some(temperature_breach) = parse_fridgetag_breach( // HOT_CUMULATIVE
                         &json_alarm["Alarm"]["1"],
                         &json_str["Conf"]["Alarm"]["1"],
                         breach_date,
