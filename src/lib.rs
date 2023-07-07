@@ -14,15 +14,15 @@ use std::io::{Result, Write};
 pub fn sample_sensor() -> Sensor {
     let config_cold_consecutive = TemperatureBreachConfig {
         breach_type: BreachType::ColdConsecutive,
-        maximum_temperature: 8.0,
-        minimum_temperature: -273.0,
+        maximum_temperature: 100.0,
+        minimum_temperature: 2.0,
         duration: Duration::seconds(240),
     };
 
     let config_hot_consecutive = TemperatureBreachConfig {
         breach_type: BreachType::HotConsecutive,
-        maximum_temperature: 100.0,
-        minimum_temperature: 2.0,
+        maximum_temperature: 8.0,
+        minimum_temperature: -273.0,
         duration: Duration::seconds(300),
     };
 

@@ -23,7 +23,7 @@ pub enum BreachType {
 #[derive(Debug, Clone)]
 // define the sensor types supported
 pub enum SensorType {
-    Berlinger,
+    Berlinger, // only Berlinger so far
 }
 
 #[derive(Debug, Clone)]
@@ -37,8 +37,8 @@ pub struct TemperatureLog {
 // define the structure used to capture a breach config
 pub struct TemperatureBreachConfig {
     pub breach_type: BreachType,
-    pub maximum_temperature: f64,
-    pub minimum_temperature: f64,
+    pub maximum_temperature: f64, // breach if temperature > maximum_temperature
+    pub minimum_temperature: f64, // breach if temperature < minimum_temperature
     pub duration: Duration,
 }
 
@@ -48,7 +48,7 @@ pub struct TemperatureBreach {
     pub breach_type: BreachType,
     pub start_timestamp: NaiveDateTime,
     pub end_timestamp: NaiveDateTime,
-    pub duration: Duration,
+    pub duration: Duration, // equals (end_timestamp - start_timestamp) for consecutive breaches, but more for cumulative ones
     pub acknowledged: bool,
 }
 

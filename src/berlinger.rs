@@ -299,9 +299,9 @@ fn parse_breach_configs(
 
     match sensor_subtype {
         SensorSubType::FridgeTag => {
-            if let Some(temperature) = parse_float(&json_str["0"]["T AL"]) {
-                max_temperature = temperature;
-                min_temperature = min_breach_temperature;
+            if let Some(temperature) = parse_float(&json_str["0"]["T AL"]) { // COLD
+                max_temperature = max_breach_temperature;
+                min_temperature = temperature;
 
                 if let Some(duration) = parse_duration(&json_str["0"]["t AL"]) {
                     breach_configs.push(TemperatureBreachConfig {
@@ -319,9 +319,9 @@ fn parse_breach_configs(
                 }
             }
 
-            if let Some(temperature) = parse_float(&json_str["1"]["T AL"]) {
-                min_temperature = temperature;
-                max_temperature = max_breach_temperature;
+            if let Some(temperature) = parse_float(&json_str["1"]["T AL"]) { // HOT
+                min_temperature = min_breach_temperature;
+                max_temperature = temperature;
 
                 if let Some(duration) = parse_duration(&json_str["1"]["t AL"]) {
                     breach_configs.push(TemperatureBreachConfig {
@@ -350,21 +350,21 @@ fn parse_breach_configs(
                         if let Some(duration) = parse_duration(&json_config["t AL"]) {
                             if let Some(breach_type) = parse_int(&json_config["Type"]) {
                                 match breach_type {
-                                    1 => {
-                                        max_temperature = temperature;
-                                        min_temperature = min_breach_temperature;
-                                    }
-                                    2 => {
-                                        min_temperature = temperature;
+                                    1 => { // COLD_CONSECUTIVE
                                         max_temperature = max_breach_temperature;
-                                    }
-                                    3 => {
-                                        max_temperature = temperature;
-                                        min_temperature = min_breach_temperature;
-                                    }
-                                    4 => {
                                         min_temperature = temperature;
+                                    }
+                                    2 => { // HOT_CONSECUTIVE
+                                        min_temperature = min_breach_temperature;
+                                        max_temperature = temperature;
+                                    }
+                                    3 => { // COLD_CUMULATIVE
                                         max_temperature = max_breach_temperature;
+                                        min_temperature = temperature;
+                                    }
+                                    4 => { // HOT_CUMULATIVE
+                                        min_temperature = min_breach_temperature;
+                                        max_temperature = temperature;
                                     }
                                     _ => {
                                         // should never actually be used
@@ -728,6 +728,8 @@ pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
 pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
 
     let mut sensors:Vec<Sensor> = Vec::new();
+
+    
 
     match drive_list() {
         Err(err) => println!("No drives found: {}",err),
