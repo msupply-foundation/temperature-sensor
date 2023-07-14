@@ -1,3 +1,17 @@
+//! # Temperature Sensor
+//! 
+//! `temperature_sensor` is a collection of utilities to parse data files
+//! generated from temperature sensors and return details of the sensor,
+//! its breach configurations, recorded breaches and temperature logs in
+//! a standard format
+//! 
+//! It has been implemented for use in our open mSupply LMIS software, which 
+//! is being rewritten in Rust (https://msupply.foundation/projects/omsupply)
+//! 
+//! So far it only supports Berlinger FridgeTag and QTag USB sensors
+//! (https://www.berlinger.com/cold-chain-management) but it is hoped to extend
+//! it to other sensor types in future
+
 pub mod berlinger;
 pub mod common;
 
@@ -6,10 +20,8 @@ use crate::common::{
 };
 
 use chrono::{Duration, NaiveDateTime};
-use std::env;
-use std::fs::File;
-use std::io::{Result, Write};
 
+/// Returns some made-up example temnperature sensor data
 pub fn sample_sensor() -> Sensor {
     let config_cold_consecutive = TemperatureBreachConfig {
         breach_type: BreachType::ColdConsecutive,
@@ -84,18 +96,32 @@ pub fn sample_sensor() -> Sensor {
     sensor
 }
 
-pub fn read_sensor() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() > 1 {
-        let single_sensor = berlinger::read_sensor_file(args[1].trim());
+/// 
+/// 
+pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
+    
+    if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
+        Ok(sensor_array)
     } else {
-        let sensor_array = berlinger::read_sensors_from_usb();
-    };
+        Err("No sensors found".to_string())
+    }
+}
 
-    // Always generate sample
-    let sample_sensor = sample_sensor();
-    let sample_path = "Sample.txt";
-    let mut output = File::create(sample_path)?;
-    write!(output, "{}", format!("{:?}\n\n", sample_sensor))
+pub fn read_connected_serials() -> Result<Vec<String>, String> {
+
+    if let Some(sensor_serials) = berlinger::read_sensor_serials() {
+        println!("Serials found: {:?}",sensor_serials);
+        Ok(sensor_serials)
+    } else {
+        Err("No sensors found".to_string())
+    }
+}
+
+pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
+    
+    if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
+        Ok(sensor)
+    } else {
+        Err("Sensor file not found".to_string())
+    }
 }

@@ -684,7 +684,7 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
     }
 }
 
-pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
+pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
 
     if Path::new(file_path).exists() {
 
@@ -716,9 +716,10 @@ pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
 
         // Generate output file for debugging/reference
         let output_path = "sensor_".to_owned() + &sensor.registration + "_output.txt";
-        if let Some(mut output) = File::create(&output_path).ok() {
-            write!(output, "{}", format!("{:?}\n\n", sensor));
-            println!("Output: {}", &output_path);
+        if let Some(mut output) = File::create(&output_path).ok() {   
+            if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
+                println!("Output: {}", &output_path)
+            }
         }
 
         Some(sensor)
@@ -728,9 +729,9 @@ pub fn read_sensor_file(file_path: &str) -> Option<Sensor> {
     }
 }
 
-pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
+fn sensor_file_list() -> Vec<String> {
 
-    let mut sensors:Vec<Sensor> = Vec::new();
+    let mut file_list:Vec<String> = Vec::new();
 
     match drive_list() {
         Err(err) => println!("No drives found: {}",err),
@@ -753,9 +754,7 @@ pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
                                                 let pdf_file_path = txt_file_path.replace(".txt",".pdf");
 
                                                 if Path::new(&pdf_file_path).exists() { // but only if it has a matching PDF
-                                                    if let Some(sensor) = read_sensor_file(txt_file_path) {
-                                                        sensors.push(sensor.clone())
-                                                    }
+                                                    file_list.push(txt_file_path.to_string())
                                                 }
                                             }
                                         }
@@ -769,10 +768,65 @@ pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
         }
     }
 
+    file_list
+
+}
+
+fn sensor_serial_from_file_path(txt_file_path: &str) -> Option<String> {
+
+    let mut valid_serial = false;
+    let mut serial = "";
+    let file_path = Path::new(&txt_file_path);
+
+    if file_path.exists() {
+        if let Some(os_file_name) = file_path.file_name() {
+            if let Some(file_name) = os_file_name.to_str() {
+                let elements: Vec<&str> = file_name.split("_").collect();
+                serial = elements[0];
+                valid_serial = true;
+            }
+        }
+    }
+
+    if valid_serial {
+        Some(serial.to_string())
+    } else {
+        None
+    }
+}
+
+pub fn read_sensor_serials() -> Option<Vec<String>> {
+
+    let mut serial_list:Vec<String> = Vec::new();
+
+    for txt_file_path in sensor_file_list() {
+        
+        if let Some(serial) = sensor_serial_from_file_path(&txt_file_path) {
+            serial_list.push(serial)
+        }
+    }
+
+    if serial_list.len() > 0 {
+        Some(serial_list)
+    }
+    else {
+        None
+    }
+}
+
+pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
+
+    let mut sensors:Vec<Sensor> = Vec::new();
+
+    for txt_file_path in sensor_file_list() {
+        if let Some(sensor) = read_sensor_from_file(&txt_file_path) {
+            sensors.push(sensor.clone())
+        }
+    }
+
     if sensors.len() > 0 {
         Some(sensors)
     } else {
         None
     }
 }
-
