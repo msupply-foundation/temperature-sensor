@@ -125,3 +125,89 @@ pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
         Err("Sensor file not found".to_string())
     }
 }
+
+pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
+
+    if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
+        for sensor in sensor_array {
+            if sensor.registration == serial.to_string() {
+                println!("Found sensor: {}",serial);
+                return Ok(sensor);
+            }
+        }
+    }
+
+    return Err("Sensor not found".to_string())
+}
+
+pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>, end_timestamp: Option<NaiveDateTime>) -> Sensor {
+
+    if let Some(start) = start_timestamp {
+
+        let mut filtered_logs: Vec<TemperatureLog> = Vec::new();
+        match sensor.logs {
+            Some(logs) => {
+
+                for log in logs {
+                    if log.timestamp >= start {
+                        filtered_logs.push(log);
+                    }
+                };
+                sensor.logs = Some(filtered_logs);
+            },
+            None => {},
+        };
+        let mut filtered_breaches: Vec<TemperatureBreach> = Vec::new();
+        match sensor.breaches {
+            Some(breaches) => {
+
+                for mut breach in breaches {
+                    if breach.start_timestamp >= start { // keep if start of breach is after start timestamp
+                        filtered_breaches.push(breach);
+                    } else if breach.end_timestamp >= start { // if start of breach is before start timestamp
+                        breach.start_timestamp = start; // keep if end of breach is after start timestamp, but adjust start of breach
+                        filtered_breaches.push(breach);
+                    }
+                };
+                sensor.breaches = Some(filtered_breaches);
+            },
+            None => {},
+        };
+    }
+                
+    if let Some(end) = end_timestamp {
+
+        let mut filtered_logs: Vec<TemperatureLog> = Vec::new();
+        match sensor.logs {
+            Some(logs) => {
+
+                for log in logs {
+                    if log.timestamp <= end {
+                        filtered_logs.push(log);
+                    }
+                };
+                sensor.logs = Some(filtered_logs);
+            },
+            None => {},
+        };
+        let mut filtered_breaches: Vec<TemperatureBreach> = Vec::new();
+        match sensor.breaches {
+            Some(breaches) => {
+
+                for mut breach in breaches {
+                    if breach.end_timestamp <= end { // keep if end of breach is before end timestamp
+                        filtered_breaches.push(breach);
+                    } else if breach.start_timestamp <= end { // if end of breach is after end timestamp
+                        breach.end_timestamp = end; // keep if start of breach is before end timestamp, but adjust end of breach
+                        filtered_breaches.push(breach);
+                    }
+                };
+                sensor.breaches = Some(filtered_breaches);
+            },
+            None => {},
+        };
+    }
+                
+    return sensor;
+}
+
