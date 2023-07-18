@@ -562,6 +562,7 @@ fn parse_breaches(
     }
 
     if breaches.len() > 0 {
+        breaches.sort_unstable_by_key(|breaches| (breaches.start_timestamp,breaches.end_timestamp));
         Some(breaches)
     } else {
         None
@@ -678,6 +679,7 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
     }
 
     if logs.len() > 0 {
+        logs.sort_unstable_by_key(|logs| (logs.timestamp));
         Some(logs)
     } else {
         None
