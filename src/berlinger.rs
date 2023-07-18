@@ -686,6 +686,7 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
     }
 }
 
+/// Reads sensor data from the specified sensor txt file.
 pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
 
     if Path::new(file_path).exists() {
@@ -707,7 +708,7 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
 
         let sensor = Sensor {
             sensor_type: SensorType::Berlinger,
-            registration: parse_string(&file_as_json["Conf"]["Serial"]),
+            serial: parse_string(&file_as_json["Conf"]["Serial"]),
             name: parse_string(&file_as_json["Device"]),
             last_connected_timestamp: report_timestamp,
             log_interval: parse_duration(&file_as_json["Conf"]["Logging Interval"]),
@@ -717,7 +718,7 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
         };
 
         // Generate output file for debugging/reference
-        let output_path = "sensor_".to_owned() + &sensor.registration + "_output.txt";
+        let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
         if let Some(mut output) = File::create(&output_path).ok() {   
             if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
                 println!("Output: {}", &output_path)
@@ -797,6 +798,10 @@ fn sensor_serial_from_file_path(txt_file_path: &str) -> Option<String> {
     }
 }
 
+/// Returns all the serials found from currently mounted USB drives up to 8GB capacity
+/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
+/// together with a matching PDF file (USB drives can have multiple pairs of files).
 pub fn read_sensor_serials() -> Option<Vec<String>> {
 
     let mut serial_list:Vec<String> = Vec::new();
@@ -816,6 +821,12 @@ pub fn read_sensor_serials() -> Option<Vec<String>> {
     }
 }
 
+/// Returns all sensors found from currently mounted USB drives up to 8GB capacity
+/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
+/// together with a matching PDF file (USB drives can have multiple pairs of files).
+/// 
+/// Currently using rs_drivelist -> only works for Windows and Linux so far...
 pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
 
     let mut sensors:Vec<Sensor> = Vec::new();

@@ -1,7 +1,7 @@
 use chrono::{Duration, NaiveDateTime};
 
 #[derive(Debug, Clone)]
-// define the types encountered when parsing a sensor text file (e.g. Berlinger)
+/// Define the types encountered when parsing a sensor txt file (e.g. Berlinger).
 pub enum SensorFieldType {
     Text(String),
     Float(f64),
@@ -12,7 +12,7 @@ pub enum SensorFieldType {
 }
 
 #[derive(Debug, Clone)]
-// define the four types of breach
+/// Define the four types of breach.
 pub enum BreachType {
     HotConsecutive,
     ColdConsecutive,
@@ -21,20 +21,20 @@ pub enum BreachType {
 }
 
 #[derive(Debug, Clone)]
-// define the sensor types supported
+/// Define the sensor types supported.
 pub enum SensorType {
     Berlinger, // only Berlinger so far
 }
 
 #[derive(Debug, Clone)]
-// define the structure used to capture a temperature log
+/// Define the structure used to capture a temperature log.
 pub struct TemperatureLog {
     pub temperature: f64,
     pub timestamp: NaiveDateTime,
 }
 
 #[derive(Debug, Clone)]
-// define the structure used to capture a breach config
+/// Define the structure used to capture a breach config.
 pub struct TemperatureBreachConfig {
     pub breach_type: BreachType,
     pub maximum_temperature: f64, // breach if temperature > maximum_temperature
@@ -43,7 +43,7 @@ pub struct TemperatureBreachConfig {
 }
 
 #[derive(Debug, Clone)]
-// define the structure used to capture a temperature breach
+/// Define the structure used to capture a temperature breach.
 pub struct TemperatureBreach {
     pub breach_type: BreachType,
     pub start_timestamp: NaiveDateTime,
@@ -53,10 +53,10 @@ pub struct TemperatureBreach {
 }
 
 #[derive(Debug, Clone)]
-// define the structure used to capture sensor details (incomplete)
+/// Define the structure used to capture sensor details (incomplete).
 pub struct Sensor {
     pub sensor_type: SensorType,
-    pub registration: String,
+    pub serial: String,
     pub name: String,
     pub last_connected_timestamp: Option<NaiveDateTime>,
     pub log_interval: Option<Duration>,

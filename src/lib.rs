@@ -3,14 +3,14 @@
 //! `temperature_sensor` is a collection of utilities to parse data files
 //! generated from temperature sensors and return details of the sensor,
 //! its breach configurations, recorded breaches and temperature logs in
-//! a standard format
+//! a standard format.
 //! 
 //! It has been implemented for use in our open mSupply LMIS software, which 
-//! is being rewritten in Rust (https://msupply.foundation/projects/omsupply)
+//! is being rewritten in Rust <https://msupply.foundation/projects/omsupply>.
 //! 
 //! So far it only supports Berlinger FridgeTag and QTag USB sensors
-//! (https://www.berlinger.com/cold-chain-management) but it is hoped to extend
-//! it to other sensor types in future
+//! <https://www.berlinger.com/cold-chain-management> but it is hoped to extend
+//! it to other sensor types in future.
 
 pub mod berlinger;
 pub mod common;
@@ -21,7 +21,7 @@ use crate::common::{
 
 use chrono::{Duration, NaiveDateTime};
 
-/// Returns some made-up example temnperature sensor data
+/// Returns some made-up example temperature sensor data, for use in automated tests.
 pub fn sample_sensor() -> Sensor {
     let config_cold_consecutive = TemperatureBreachConfig {
         breach_type: BreachType::ColdConsecutive,
@@ -84,7 +84,7 @@ pub fn sample_sensor() -> Sensor {
 
     let sensor = Sensor {
         sensor_type: SensorType::Berlinger,
-        registration: String::from("reg 1234"),
+        serial: String::from("reg 1234"),
         name: String::from("Berlinger 1"),
         last_connected_timestamp: Some(temperature_timestamp),
         log_interval: Some(interval),
@@ -96,8 +96,12 @@ pub fn sample_sensor() -> Sensor {
     sensor
 }
 
+/// Returns all sensors found from currently mounted USB drives up to 8GB capacity
+/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
+/// together with a matching PDF file (USB drives can have multiple pairs of files).
 /// 
-/// 
+/// Currently using rs_drivelist -> only works for Windows and Linux so far...
 pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
     
     if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
@@ -107,6 +111,10 @@ pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
     }
 }
 
+/// Returns all the serials found from currently mounted USB drives up to 8GB capacity
+/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
+/// together with a matching PDF file (USB drives can have multiple pairs of files).
 pub fn read_connected_serials() -> Result<Vec<String>, String> {
 
     if let Some(sensor_serials) = berlinger::read_sensor_serials() {
@@ -117,6 +125,7 @@ pub fn read_connected_serials() -> Result<Vec<String>, String> {
     }
 }
 
+/// Reads sensor data from the specified sensor txt file.
 pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
     
     if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
@@ -126,11 +135,14 @@ pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
     }
 }
 
+/// Reads sensor data from USB for the txt file corresponding to the specified serial.
+/// Note that the serial is expected to match the corresponding serial field inside
+/// the txt file. 
 pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
 
     if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
         for sensor in sensor_array {
-            if sensor.registration == serial.to_string() {
+            if sensor.serial == serial.to_string() {
                 println!("Found sensor: {}",serial);
                 return Ok(sensor);
             }
@@ -140,6 +152,22 @@ pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
     return Err("Sensor not found".to_string())
 }
 
+/// Applies optional start/end timestamps to the breaches and temperature logs
+/// of the specified sensor e.g. to include only data since the last time the
+/// sensor was read (or from the start of the last recorded breach if it was
+/// ongoing at the time of the last sensor read).
+/// 
+/// Temperature logs are filtered out if they are either before the start timestamp
+/// or after the end timestamp. 
+/// 
+/// Breaches are filtered out if they are entirely before the start timestamp or after
+/// the end timestamp. If a breach is partially before the start timestamp or partially
+/// after the end timestamp, it's start/end are modified to match, but its duration
+/// isn't changed.
+/// 
+/// Note that the difference between the start and end breach timestamps is only
+/// the same as the breach duration for consecutive breaches which start and end
+/// within the specified interval.
 pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>, end_timestamp: Option<NaiveDateTime>) -> Sensor {
 
     if let Some(start) = start_timestamp {
@@ -153,7 +181,11 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
                         filtered_logs.push(log);
                     }
                 };
-                sensor.logs = Some(filtered_logs);
+                if filtered_logs.len() > 0 {
+                    sensor.logs = Some(filtered_logs);
+                } else {
+                    sensor.logs = None;
+                }
             },
             None => {},
         };
@@ -169,7 +201,11 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
                         filtered_breaches.push(breach);
                     }
                 };
-                sensor.breaches = Some(filtered_breaches);
+                if filtered_breaches.len() > 0 {
+                    sensor.breaches = Some(filtered_breaches);
+                } else {
+                    sensor.breaches = None;
+                }
             },
             None => {},
         };
@@ -186,7 +222,11 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
                         filtered_logs.push(log);
                     }
                 };
-                sensor.logs = Some(filtered_logs);
+                if filtered_logs.len() > 0 {
+                    sensor.logs = Some(filtered_logs);
+                } else {
+                    sensor.logs = None;
+                }
             },
             None => {},
         };
@@ -202,7 +242,11 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
                         filtered_breaches.push(breach);
                     }
                 };
-                sensor.breaches = Some(filtered_breaches);
+                if filtered_breaches.len() > 0 {
+                    sensor.breaches = Some(filtered_breaches);
+                } else {
+                    sensor.breaches = None;
+                }
             },
             None => {},
         };
@@ -211,3 +255,61 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
     return sensor;
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sample_core() {
+        let sensor = sample_sensor();
+        assert_eq!(sensor.serial,"reg 1234");
+        assert!(sensor.breaches.is_some());
+        assert!(sensor.logs.is_some());
+        assert!(sensor.configs.is_some());
+    }
+
+    #[test]
+    fn test_sample_breach() {
+        let sensor = sample_sensor();
+        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:04:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:17:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        if let Some(breaches) = sensor.breaches {
+            assert_eq!(breaches[0].start_timestamp,start_timestamp); // start of hot breach
+            assert_eq!(breaches[1].end_timestamp,end_timestamp); // end of cold breach
+        }
+    }
+
+    #[test]
+    fn test_sample_log() {
+        let sensor = sample_sensor();
+        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:04:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:17:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        if let Some(logs) = sensor.logs {
+            assert_eq!(logs[4].timestamp,start_timestamp); // start of hot breach
+            assert_eq!(logs[17].timestamp,end_timestamp); // end of cold breach
+        }
+    }
+
+    #[test]
+    fn test_sample_filter_breach() {
+        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp));
+        if let Some(breaches) = sensor.breaches {
+            assert_eq!(breaches[0].start_timestamp,start_timestamp); // start of hot breach changed
+            assert_eq!(breaches[1].end_timestamp,end_timestamp); // end of cold breach changed
+        }
+    }
+
+    #[test]
+    fn test_sample_filter_log() {
+        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp));
+        if let Some(logs) = sensor.logs {
+            assert_eq!(logs[0].timestamp,start_timestamp); // start of hot breach changed
+            assert_eq!(logs[8].timestamp,end_timestamp); // end of cold breach changed
+        }
+    }
+
+}
