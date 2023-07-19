@@ -8,8 +8,8 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.24"
-serde_json = "1.0.96"
+chrono = "0.4.23"
+serde_json = "1.0.66"
 json = "0.12.4"
 rs-drivelist = "0.9.3"
 rand = "0.8.5"
