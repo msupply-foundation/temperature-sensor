@@ -739,7 +739,7 @@ fn sensor_volume_paths() -> Vec<String> {
 
     let mut volume_list:Vec<String> = Vec::new();
 
-    if let Ok(entries) = fs::read_dir("\\Volumes".to_str()) { // loop over folders in Volumes
+    if let Ok(entries) = fs::read_dir("/Volumes".to_str()) { // loop over folders in Volumes
         for entry in entries {
             if let Ok(entry) = entry {
                 if entry.is_dir() {
@@ -756,7 +756,7 @@ fn sensor_volume_paths() -> Vec<String> {
 
     let mut volume_list:Vec<String> = Vec::new();
 
-    if let Ok(entries) = fs::read_dir("/mnt/media_rw".to_str()) { // loop over media folders
+    if let Ok(entries) = fs::read_dir("/mnt/media_rw".to_str()) { // loop over mounted media folders
         for entry in entries {
             if let Ok(entry) = entry {
                 if entry.is_dir() {
@@ -779,7 +779,7 @@ fn sensor_volume_paths() -> Vec<String> {
             for drive_index in 0..drives.len() { // loop over all detected drives
 
                 let mount_points = &drives[drive_index].mountpoints;
-                for partition_index in 0..mount_points.len() { // loop pver partitions
+                for partition_index in 0..mount_points.len() { // loop over partitions
                     let mount_point = &mount_points[partition_index];
 
                     if mount_point.totalBytes < Some(8*1024*1024*1024) { // possible USB drive if < 8 GB
