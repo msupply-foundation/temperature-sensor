@@ -739,11 +739,13 @@ fn sensor_volume_paths() -> Vec<String> {
 
     let mut volume_list:Vec<String> = Vec::new();
 
-    if let Ok(entries) = fs::read_dir("/Volumes".to_str()) { // loop over folders in Volumes
+    if let Ok(entries) = fs::read_dir("/Volumes") { // loop over folders in Volumes
         for entry in entries {
             if let Ok(entry) = entry {
-                if entry.is_dir() {
-                    volume_list.push(entry.path().to_string());
+                if entry.path().is_dir() {
+                    if let Some(txt_file_path) = entry.path().to_str() {
+                        volume_list.push(txt_file_path.to_string())
+                    }
                 }
             }
         }
@@ -756,11 +758,13 @@ fn sensor_volume_paths() -> Vec<String> {
 
     let mut volume_list:Vec<String> = Vec::new();
 
-    if let Ok(entries) = fs::read_dir("/mnt/media_rw".to_str()) { // loop over mounted media folders
+    if let Ok(entries) = fs::read_dir("/mnt/media_rw") { // loop over mounted media folders
         for entry in entries {
             if let Ok(entry) = entry {
-                if entry.is_dir() {
-                    volume_list.push(entry.path().to_string());
+                if entry.path().is_dir() {
+                    if let Some(txt_file_path) = entry.path().to_str() {
+                        volume_list.push(txt_file_path.to_string())
+                    }
                 }
             }
         }
