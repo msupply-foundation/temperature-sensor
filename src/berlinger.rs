@@ -5,6 +5,8 @@ use std::io;
 use std::fs;
 use std::io::{BufRead, Write};
 use std::path::Path;
+
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 use rs_drivelist::drive_list;
 
 use crate::common::{
@@ -732,9 +734,44 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
     }
 }
 
-fn sensor_file_list() -> Vec<String> {
+#[cfg(target_os = "macos")]
+fn sensor_volume_paths() -> Vec<String> {
 
-    let mut file_list:Vec<String> = Vec::new();
+    let mut volume_list:Vec<String> = Vec::new();
+
+    if let Ok(entries) = fs::read_dir("\\Volumes".to_str()) { // loop over folders in Volumes
+        for entry in entries {
+            if let Ok(entry) = entry {
+                if entry.is_dir() {
+                    volume_list.push(entry.path().to_string());
+                }
+            }
+        }
+    }
+    volume_list
+}
+
+#[cfg(target_os = "android")]
+fn sensor_volume_paths() -> Vec<String> {
+
+    let mut volume_list:Vec<String> = Vec::new();
+
+    if let Ok(entries) = fs::read_dir("/mnt/media_rw".to_str()) { // loop over media folders
+        for entry in entries {
+            if let Ok(entry) = entry {
+                if entry.is_dir() {
+                    volume_list.push(entry.path().to_string());
+                }
+            }
+        }
+    }
+    volume_list
+}
+
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+fn sensor_volume_paths() -> Vec<String> {
+
+    let mut volume_list:Vec<String> = Vec::new();
 
     match drive_list() {
         Err(err) => println!("No drives found: {}",err),
@@ -746,22 +783,34 @@ fn sensor_file_list() -> Vec<String> {
                     let mount_point = &mount_points[partition_index];
 
                     if mount_point.totalBytes < Some(8*1024*1024*1024) { // possible USB drive if < 8 GB
+                        volume_list.push(mount_point.path.clone());
+                    }
+                }
+            }
+        }
+    }
 
-                        if let Ok(entries) = fs::read_dir(&mount_point.path) { // loop over files in the volume root
-                            for entry in entries {
-                                if let Ok(entry) = entry {
+    volume_list
+}
 
-                                    if let Some(extension) = entry.path().extension() {
-                                        if extension == "txt" { // might be a sensor txt file
-                                            if let Some(txt_file_path) = entry.path().to_str() {
-                                                let pdf_file_path = txt_file_path.replace(".txt",".pdf");
+fn sensor_file_list() -> Vec<String> {
 
-                                                if Path::new(&pdf_file_path).exists() { // but only if it has a matching PDF
-                                                    file_list.push(txt_file_path.to_string())
-                                                }
-                                            }
-                                        }
-                                    }
+    let mut file_list:Vec<String> = Vec::new();
+    //let volume_paths = sensor_volume_paths();
+
+    for volume_root in sensor_volume_paths() { // loop pver volumes
+
+        if let Ok(entries) = fs::read_dir(&volume_root) { // loop over files in the volume root
+            for entry in entries {
+                if let Ok(entry) = entry {
+
+                    if let Some(extension) = entry.path().extension() {
+                        if extension == "txt" { // might be a sensor txt file
+                            if let Some(txt_file_path) = entry.path().to_str() {
+                                let pdf_file_path = txt_file_path.replace(".txt",".pdf");
+
+                                if Path::new(&pdf_file_path).exists() { // but only if it has a matching PDF
+                                    file_list.push(txt_file_path.to_string())
                                 }
                             }
                         }
@@ -772,7 +821,6 @@ fn sensor_file_list() -> Vec<String> {
     }
 
     file_list
-
 }
 
 fn sensor_serial_from_file_path(txt_file_path: &str) -> Option<String> {
