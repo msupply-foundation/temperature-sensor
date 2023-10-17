@@ -11,7 +11,7 @@ pub enum SensorFieldType {
     Timestamp(NaiveDateTime),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// Define the four types of breach.
 pub enum BreachType {
     HotConsecutive,
