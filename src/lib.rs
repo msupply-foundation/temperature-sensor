@@ -161,9 +161,8 @@ pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
 /// or after the end timestamp. 
 /// 
 /// Breaches are filtered out if they are entirely before the start timestamp or after
-/// the end timestamp. If a breach is partially before the start timestamp or partially
-/// after the end timestamp, it's start/end are modified to match, but its duration
-/// isn't changed.
+/// the end timestamp i.e. keep if any part of the breach is between the start timestamp
+/// and the end timestamp.
 /// 
 /// Note that the difference between the start and end breach timestamps is only
 /// the same as the breach duration for consecutive breaches which start and end
@@ -197,8 +196,7 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
                     if breach.start_timestamp >= start { // keep if start of breach is after start timestamp
                         filtered_breaches.push(breach);
                     } else if breach.end_timestamp >= start { // if start of breach is before start timestamp
-                        breach.start_timestamp = start; // keep if end of breach is after start timestamp, but adjust start of breach
-                        filtered_breaches.push(breach);
+                        filtered_breaches.push(breach); // keep if end of breach is after start timestamp
                     }
                 };
                 if filtered_breaches.len() > 0 {
@@ -238,8 +236,7 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
                     if breach.end_timestamp <= end { // keep if end of breach is before end timestamp
                         filtered_breaches.push(breach);
                     } else if breach.start_timestamp <= end { // if end of breach is after end timestamp
-                        breach.end_timestamp = end; // keep if start of breach is before end timestamp, but adjust end of breach
-                        filtered_breaches.push(breach);
+                        filtered_breaches.push(breach); // keep if start of breach is before end timestamp
                     }
                 };
                 if filtered_breaches.len() > 0 {
