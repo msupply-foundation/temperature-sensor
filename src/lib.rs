@@ -100,8 +100,6 @@ pub fn sample_sensor() -> Sensor {
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
-/// 
-/// Currently using rs_drivelist -> only works for Windows and Linux so far...
 pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
     
     if let Some(sensor_array) = berlinger::read_sensors_from_usb() {

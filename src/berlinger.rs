@@ -802,7 +802,7 @@ fn sensor_file_list() -> Vec<String> {
     let mut file_list:Vec<String> = Vec::new();
     //let volume_paths = sensor_volume_paths();
 
-    for volume_root in sensor_volume_paths() { // loop pver volumes
+    for volume_root in sensor_volume_paths() { // loop over volumes
 
         if let Ok(entries) = fs::read_dir(&volume_root) { // loop over files in the volume root
             for entry in entries {
@@ -877,8 +877,6 @@ pub fn read_sensor_serials() -> Option<Vec<String>> {
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
-/// 
-/// Currently using rs_drivelist -> only works for Windows and Linux so far...
 pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
 
     let mut sensors:Vec<Sensor> = Vec::new();
