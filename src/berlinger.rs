@@ -3,7 +3,7 @@ use serde_json::{json, Value};
 use std::fs::File;
 use std::io;
 use std::fs;
-use std::io::{BufRead, Write};
+use std::io::BufRead;
 use std::path::Path;
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
@@ -719,14 +719,6 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
             logs: parse_logs(&file_as_json, &sensor_subtype),
         };
 
-        // Generate output file for debugging/reference
-        let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
-        if let Some(mut output) = File::create(&output_path).ok() {   
-            if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
-                println!("Output: {}", &output_path)
-            }
-        }
-
         Some(sensor)
     } else {
         println!("File not found: {}",file_path);
@@ -800,7 +792,6 @@ fn sensor_volume_paths() -> Vec<String> {
 fn sensor_file_list() -> Vec<String> {
 
     let mut file_list:Vec<String> = Vec::new();
-    //let volume_paths = sensor_volume_paths();
 
     for volume_root in sensor_volume_paths() { // loop over volumes
 

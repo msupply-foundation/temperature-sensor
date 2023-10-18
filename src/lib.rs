@@ -15,6 +15,9 @@
 pub mod berlinger;
 pub mod common;
 
+use std::fs::File;
+use std::io::Write;
+
 pub use crate::common::{
     BreachType, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig, TemperatureLog,
 };
@@ -124,9 +127,20 @@ pub fn read_connected_serials() -> Result<Vec<String>, String> {
 }
 
 /// Reads sensor data from the specified sensor txt file.
-pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
+pub fn read_sensor_file(file_path: &str, debug: bool) -> Result<Sensor, String> {
     
     if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
+
+        if debug {
+            // Generate output file for debugging/reference
+            let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
+            if let Some(mut output) = File::create(&output_path).ok() {   
+                if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
+                    println!("Output: {}", &output_path)
+                }
+            }
+        }
+
         Ok(sensor)
     } else {
         Err("Sensor file not found".to_string())
@@ -136,12 +150,23 @@ pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
 /// Reads sensor data from USB for the txt file corresponding to the specified serial.
 /// Note that the serial is expected to match the corresponding serial field inside
 /// the txt file. 
-pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
+pub fn read_sensor(serial: &str, debug: bool) -> Result<Sensor, String> {
 
     if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
         for sensor in sensor_array {
             if sensor.serial == serial.to_string() {
                 println!("Found sensor: {}",serial);
+
+                if debug {
+                    // Generate output file for debugging/reference
+                    let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
+                    if let Some(mut output) = File::create(&output_path).ok() {   
+                        if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
+                            println!("Output: {}", &output_path)
+                        }
+                    }
+                }
+
                 return Ok(sensor);
             }
         }
@@ -165,7 +190,7 @@ pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
 /// Note that the difference between the start and end breach timestamps is only
 /// the same as the breach duration for consecutive breaches which start and end
 /// within the specified interval.
-pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>, end_timestamp: Option<NaiveDateTime>) -> Sensor {
+pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>, end_timestamp: Option<NaiveDateTime>, debug: bool) -> Sensor {
 
     if let Some(start) = start_timestamp {
 
@@ -246,7 +271,17 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
             None => {},
         };
     }
-                
+
+    if debug {
+        // Generate output file for debugging/reference
+        let output_path = "sensor_".to_owned() + &sensor.serial + "_filtered_output.txt";
+        if let Some(mut output) = File::create(&output_path).ok() {   
+            if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
+                println!("Filtered output from {:?} - {:?} to: {}", start_timestamp, end_timestamp, &output_path);
+            }
+        }
+    }
+
     return sensor;
 }
 
@@ -289,7 +324,7 @@ mod tests {
     fn test_sample_filter_breach() {
         let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
         let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp));
+        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp), true);
         if let Some(breaches) = sensor.breaches {
             assert_eq!(breaches[0].start_timestamp,start_timestamp); // start of hot breach changed
             assert_eq!(breaches[1].end_timestamp,end_timestamp); // end of cold breach changed
@@ -300,33 +335,11 @@ mod tests {
     fn test_sample_filter_log() {
         let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
         let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp));
+        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp), true);
         if let Some(logs) = sensor.logs {
             assert_eq!(logs[0].timestamp,start_timestamp); // start of hot breach changed
             assert_eq!(logs[8].timestamp,end_timestamp); // end of cold breach changed
         }
     }
 
-}
-
-#[cfg(target_os="android")]
-#[allow(non_snake_case)]
-pub mod android {
-    extern crate jni;
-
-    use super::*;
-    use self::jni::JNIEnv;
-    use self::jni::objects::{JClass, JString};
-    use self::jni::sys::{jstring};
-
-    #[no_mangle]
-    pub unsafe extern fn Java_com_example_rusttest_RustGreetings_greeting(env: JNIEnv, _: JClass, java_pattern: JString) -> jstring {
-        // Our Java companion code might pass-in "world" as a string, hence the name.
-        let world = rust_greeting(env.get_string(java_pattern).expect("invalid pattern string").as_ptr());
-        // Retake pointer so that we can use it below and allow memory to be freed when it goes out of scope.
-        let world_ptr = CString::from_raw(world);
-        let output = env.new_string(world_ptr.to_str().unwrap()).expect("Couldn't create java string!");
-
-        output.into_inner()
-    }
 }
