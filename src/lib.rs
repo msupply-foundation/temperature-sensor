@@ -192,7 +192,7 @@ pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>,
         match sensor.breaches {
             Some(breaches) => {
 
-                for mut breach in breaches {
+                for breach in breaches {
                     if breach.start_timestamp >= start { // keep if start of breach is after start timestamp
                         filtered_breaches.push(breach);
                     } else if breach.end_timestamp >= start { // if start of breach is before start timestamp
