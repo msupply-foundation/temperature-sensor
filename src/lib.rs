@@ -1,13 +1,13 @@
 //! # Temperature Sensor
-//! 
+//!
 //! `temperature_sensor` is a collection of utilities to parse data files
 //! generated from temperature sensors and return details of the sensor,
 //! its breach configurations, recorded breaches and temperature logs in
 //! a standard format.
-//! 
-//! It has been implemented for use in our open mSupply LMIS software, which 
+//!
+//! It has been implemented for use in our open mSupply LMIS software, which
 //! is being rewritten in Rust <https://msupply.foundation/projects/omsupply>.
-//! 
+//!
 //! So far it only supports Berlinger FridgeTag and QTag USB sensors
 //! <https://www.berlinger.com/cold-chain-management> but it is hoped to extend
 //! it to other sensor types in future.
@@ -22,7 +22,7 @@ pub use crate::common::{
     BreachType, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig, TemperatureLog,
 };
 
-use chrono::{Duration, NaiveDateTime};
+use chrono::{Duration, Local, NaiveDateTime};
 
 /// Returns some made-up example temperature sensor data, for use in automated tests.
 pub fn sample_sensor() -> Sensor {
@@ -104,7 +104,6 @@ pub fn sample_sensor() -> Sensor {
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
 pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
-    
     if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
         Ok(sensor_array)
     } else {
@@ -117,9 +116,8 @@ pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
 pub fn read_connected_serials() -> Result<Vec<String>, String> {
-
     if let Some(sensor_serials) = berlinger::read_sensor_serials() {
-        println!("Serials found: {:?}",sensor_serials);
+        println!("Serials found: {:?}", sensor_serials);
         Ok(sensor_serials)
     } else {
         Err("No sensors found".to_string())
@@ -128,13 +126,11 @@ pub fn read_connected_serials() -> Result<Vec<String>, String> {
 
 /// Reads sensor data from the specified sensor txt file.
 pub fn read_sensor_file(file_path: &str, debug: bool) -> Result<Sensor, String> {
-    
     if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
-
         if debug {
             // Generate output file for debugging/reference
             let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
-            if let Some(mut output) = File::create(&output_path).ok() {   
+            if let Some(mut output) = File::create(&output_path).ok() {
                 if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
                     println!("Output: {}", &output_path)
                 }
@@ -147,20 +143,32 @@ pub fn read_sensor_file(file_path: &str, debug: bool) -> Result<Sensor, String> 
     }
 }
 
+/// Reads sensor data from the contents of a txt file, by writing the
+/// contents to a local txt file and reading that.
+pub fn parse_sensor(file_contents: &str) -> Result<Sensor, String> {
+    let file_path = format!("sensor_input_{}.txt", Local::now().timestamp());
+    if let Some(mut output) = File::create(&file_path).ok() {
+        if write!(output, "{}", file_contents).is_ok() {
+            println!("Reading sensor from: {}", &file_path);
+            return read_sensor_file(&file_path, true)
+        }
+    }
+    Err("Sensor file not created".to_string())
+}
+
 /// Reads sensor data from USB for the txt file corresponding to the specified serial.
 /// Note that the serial is expected to match the corresponding serial field inside
-/// the txt file. 
+/// the txt file.
 pub fn read_sensor(serial: &str, debug: bool) -> Result<Sensor, String> {
-
     if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
         for sensor in sensor_array {
             if sensor.serial == serial.to_string() {
-                println!("Found sensor: {}",serial);
+                println!("Found sensor: {}", serial);
 
                 if debug {
                     // Generate output file for debugging/reference
                     let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
-                    if let Some(mut output) = File::create(&output_path).ok() {   
+                    if let Some(mut output) = File::create(&output_path).ok() {
                         if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
                             println!("Output: {}", &output_path)
                         }
@@ -172,112 +180,117 @@ pub fn read_sensor(serial: &str, debug: bool) -> Result<Sensor, String> {
         }
     }
 
-    return Err("Sensor not found".to_string())
+    return Err("Sensor not found".to_string());
 }
 
 /// Applies optional start/end timestamps to the breaches and temperature logs
 /// of the specified sensor e.g. to include only data since the last time the
 /// sensor was read (or from the start of the last recorded breach if it was
 /// ongoing at the time of the last sensor read).
-/// 
+///
 /// Temperature logs are filtered out if they are either before the start timestamp
-/// or after the end timestamp. 
-/// 
+/// or after the end timestamp.
+///
 /// Breaches are filtered out if they are entirely before the start timestamp or after
 /// the end timestamp i.e. keep if any part of the breach is between the start timestamp
 /// and the end timestamp.
-/// 
+///
 /// Note that the difference between the start and end breach timestamps is only
 /// the same as the breach duration for consecutive breaches which start and end
 /// within the specified interval.
-pub fn filter_sensor(mut sensor: Sensor, start_timestamp: Option<NaiveDateTime>, end_timestamp: Option<NaiveDateTime>, debug: bool) -> Sensor {
-
+pub fn filter_sensor(
+    mut sensor: Sensor,
+    start_timestamp: Option<NaiveDateTime>,
+    end_timestamp: Option<NaiveDateTime>,
+    debug: bool,
+) -> Sensor {
     if let Some(start) = start_timestamp {
-
         let mut filtered_logs: Vec<TemperatureLog> = Vec::new();
         match sensor.logs {
             Some(logs) => {
-
                 for log in logs {
                     if log.timestamp >= start {
                         filtered_logs.push(log);
                     }
-                };
+                }
                 if filtered_logs.len() > 0 {
                     sensor.logs = Some(filtered_logs);
                 } else {
                     sensor.logs = None;
                 }
-            },
-            None => {},
+            }
+            None => {}
         };
         let mut filtered_breaches: Vec<TemperatureBreach> = Vec::new();
         match sensor.breaches {
             Some(breaches) => {
-
                 for breach in breaches {
-                    if breach.start_timestamp >= start { // keep if start of breach is after start timestamp
+                    if breach.start_timestamp >= start {
+                        // keep if start of breach is after start timestamp
                         filtered_breaches.push(breach);
-                    } else if breach.end_timestamp >= start { // if start of breach is before start timestamp
+                    } else if breach.end_timestamp >= start {
+                        // if start of breach is before start timestamp
                         filtered_breaches.push(breach); // keep if end of breach is after start timestamp
                     }
-                };
+                }
                 if filtered_breaches.len() > 0 {
                     sensor.breaches = Some(filtered_breaches);
                 } else {
                     sensor.breaches = None;
                 }
-            },
-            None => {},
+            }
+            None => {}
         };
     }
-                
-    if let Some(end) = end_timestamp {
 
+    if let Some(end) = end_timestamp {
         let mut filtered_logs: Vec<TemperatureLog> = Vec::new();
         match sensor.logs {
             Some(logs) => {
-
                 for log in logs {
                     if log.timestamp <= end {
                         filtered_logs.push(log);
                     }
-                };
+                }
                 if filtered_logs.len() > 0 {
                     sensor.logs = Some(filtered_logs);
                 } else {
                     sensor.logs = None;
                 }
-            },
-            None => {},
+            }
+            None => {}
         };
         let mut filtered_breaches: Vec<TemperatureBreach> = Vec::new();
         match sensor.breaches {
             Some(breaches) => {
-
                 for breach in breaches {
-                    if breach.end_timestamp <= end { // keep if end of breach is before end timestamp
+                    if breach.end_timestamp <= end {
+                        // keep if end of breach is before end timestamp
                         filtered_breaches.push(breach);
-                    } else if breach.start_timestamp <= end { // if end of breach is after end timestamp
+                    } else if breach.start_timestamp <= end {
+                        // if end of breach is after end timestamp
                         filtered_breaches.push(breach); // keep if start of breach is before end timestamp
                     }
-                };
+                }
                 if filtered_breaches.len() > 0 {
                     sensor.breaches = Some(filtered_breaches);
                 } else {
                     sensor.breaches = None;
                 }
-            },
-            None => {},
+            }
+            None => {}
         };
     }
 
     if debug {
         // Generate output file for debugging/reference
         let output_path = "sensor_".to_owned() + &sensor.serial + "_filtered_output.txt";
-        if let Some(mut output) = File::create(&output_path).ok() {   
+        if let Some(mut output) = File::create(&output_path).ok() {
             if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
-                println!("Filtered output from {:?} - {:?} to: {}", start_timestamp, end_timestamp, &output_path);
+                println!(
+                    "Filtered output from {:?} - {:?} to: {}",
+                    start_timestamp, end_timestamp, &output_path
+                );
             }
         }
     }
@@ -292,7 +305,7 @@ mod tests {
     #[test]
     fn test_sample_core() {
         let sensor = sample_sensor();
-        assert_eq!(sensor.serial,"reg 1234");
+        assert_eq!(sensor.serial, "reg 1234");
         assert!(sensor.breaches.is_some());
         assert!(sensor.logs.is_some());
         assert!(sensor.configs.is_some());
@@ -301,45 +314,62 @@ mod tests {
     #[test]
     fn test_sample_breach() {
         let sensor = sample_sensor();
-        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:04:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:17:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let start_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:04:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:17:00", "%Y-%m-%d %H:%M:%S").unwrap();
         if let Some(breaches) = sensor.breaches {
-            assert_eq!(breaches[0].start_timestamp,start_timestamp); // start of hot breach
-            assert_eq!(breaches[1].end_timestamp,end_timestamp); // end of cold breach
+            assert_eq!(breaches[0].start_timestamp, start_timestamp); // start of hot breach
+            assert_eq!(breaches[1].end_timestamp, end_timestamp); // end of cold breach
         }
     }
 
     #[test]
     fn test_sample_log() {
         let sensor = sample_sensor();
-        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:04:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:17:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let start_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:04:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:17:00", "%Y-%m-%d %H:%M:%S").unwrap();
         if let Some(logs) = sensor.logs {
-            assert_eq!(logs[4].timestamp,start_timestamp); // start of hot breach
-            assert_eq!(logs[17].timestamp,end_timestamp); // end of cold breach
+            assert_eq!(logs[4].timestamp, start_timestamp); // start of hot breach
+            assert_eq!(logs[17].timestamp, end_timestamp); // end of cold breach
         }
     }
 
     #[test]
     fn test_sample_filter_breach() {
-        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp), true);
+        let start_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let sensor = filter_sensor(
+            sample_sensor(),
+            Some(start_timestamp),
+            Some(end_timestamp),
+            true,
+        );
         if let Some(breaches) = sensor.breaches {
-            assert_eq!(breaches[0].start_timestamp,start_timestamp); // start of hot breach changed
-            assert_eq!(breaches[1].end_timestamp,end_timestamp); // end of cold breach changed
+            assert_eq!(breaches[0].start_timestamp, start_timestamp); // start of hot breach changed
+            assert_eq!(breaches[1].end_timestamp, end_timestamp); // end of cold breach changed
         }
     }
 
     #[test]
     fn test_sample_filter_log() {
-        let start_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let end_timestamp = NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let sensor = filter_sensor(sample_sensor(),Some(start_timestamp),Some(end_timestamp), true);
+        let start_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let end_timestamp =
+            NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let sensor = filter_sensor(
+            sample_sensor(),
+            Some(start_timestamp),
+            Some(end_timestamp),
+            true,
+        );
         if let Some(logs) = sensor.logs {
-            assert_eq!(logs[0].timestamp,start_timestamp); // start of hot breach changed
-            assert_eq!(logs[8].timestamp,end_timestamp); // end of cold breach changed
+            assert_eq!(logs[0].timestamp, start_timestamp); // start of hot breach changed
+            assert_eq!(logs[8].timestamp, end_timestamp); // end of cold breach changed
         }
     }
-
 }
