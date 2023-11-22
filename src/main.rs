@@ -17,20 +17,20 @@ fn main() -> Result<(), Box<dyn Error>> {
                 start_timestamp = Some(timestamp - Duration::days(3)); // go back from 3 days
             }
 
-            temperature_sensor::filter_sensor(sensor, start_timestamp, None, true);
+            temperature_sensor::filter_sensor(sensor, start_timestamp, None);
         }
     } else {
         // read from USB
         let sensor_serials = temperature_sensor::read_connected_serials()?;
 
         for sensor_serial in sensor_serials {
-            sensor = temperature_sensor::read_sensor(&sensor_serial, true)?;
+            sensor = temperature_sensor::read_sensor(&sensor_serial)?;
 
             if let Some(timestamp) = sensor.last_connected_timestamp {
                 start_timestamp = Some(timestamp - Duration::days(3)); // go back from 3 days
             }
 
-            temperature_sensor::filter_sensor(sensor, start_timestamp, None, true);
+            temperature_sensor::filter_sensor(sensor, start_timestamp, None);
         }
     }
 

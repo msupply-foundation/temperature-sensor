@@ -120,7 +120,6 @@ fn read_sensor_to_json(file_path: &str) -> Value {
                                 // regular line format
 
                                 json_value = json_elements[1];
-                                //println!("Value: {}, Tag: {}", json_value.to_string(), json_tag);
 
                                 match level {
                                     0 => current_json[json_tag] = json_value.into(),
@@ -744,7 +743,6 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
 pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
     if Path::new(file_path).exists() {
         let file_as_json = read_sensor_to_json(file_path);
-        //println!("JSON: {:?}", file_as_json.to_string().replace("\"", ""));
 
         let report_timestamp: Option<NaiveDateTime>; // = None;
         let sensor_subtype = parse_subtype(&file_as_json);
@@ -772,7 +770,7 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
 
         Some(sensor)
     } else {
-        println!("File not found: {}", file_path);
+        log::error!("File not found: {}", file_path);
         None
     }
 }
@@ -820,7 +818,7 @@ fn sensor_volume_paths() -> Vec<String> {
     let mut volume_list: Vec<String> = Vec::new();
 
     match drive_list() {
-        Err(err) => println!("No drives found: {}", err),
+        Err(err) => log::error!("No drives found: {}", err),
         Ok(drives) => {
             for drive_index in 0..drives.len() {
                 // loop over all detected drives

@@ -117,7 +117,7 @@ pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
 pub fn read_connected_serials() -> Result<Vec<String>, String> {
     if let Some(sensor_serials) = berlinger::read_sensor_serials() {
-        println!("Serials found: {:?}", sensor_serials);
+        log::info!("Serials found: {:?}", sensor_serials);
         Ok(sensor_serials)
     } else {
         Err("No sensors found".to_string())
@@ -125,14 +125,14 @@ pub fn read_connected_serials() -> Result<Vec<String>, String> {
 }
 
 /// Reads sensor data from the specified sensor txt file.
-pub fn read_sensor_file(file_path: &str, debug: bool) -> Result<Sensor, String> {
+pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
     if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
-        if debug {
+        if cfg!(debug_assertions) {
             // Generate output file for debugging/reference
             let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
             if let Some(mut output) = File::create(&output_path).ok() {
                 if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
-                    println!("Output: {}", &output_path)
+                    log::info!("Output: {}", &output_path)
                 }
             }
         }
@@ -149,8 +149,8 @@ pub fn parse_sensor(file_contents: &str) -> Result<Sensor, String> {
     let file_path = format!("sensor_input_{}.txt", Local::now().timestamp());
     if let Some(mut output) = File::create(&file_path).ok() {
         if write!(output, "{}", file_contents).is_ok() {
-            println!("Reading sensor from: {}", &file_path);
-            return read_sensor_file(&file_path, true)
+            log::info!("Reading sensor from: {}", &file_path);
+            return read_sensor_file(&file_path)
         }
     }
     Err("Sensor file not created".to_string())
@@ -159,18 +159,18 @@ pub fn parse_sensor(file_contents: &str) -> Result<Sensor, String> {
 /// Reads sensor data from USB for the txt file corresponding to the specified serial.
 /// Note that the serial is expected to match the corresponding serial field inside
 /// the txt file.
-pub fn read_sensor(serial: &str, debug: bool) -> Result<Sensor, String> {
+pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
     if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
         for sensor in sensor_array {
             if sensor.serial == serial.to_string() {
-                println!("Found sensor: {}", serial);
+                log::info!("Found sensor: {}", serial);
 
-                if debug {
+                if cfg!(debug_assertions) {
                     // Generate output file for debugging/reference
                     let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
                     if let Some(mut output) = File::create(&output_path).ok() {
                         if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
-                            println!("Output: {}", &output_path)
+                            log::info!("Output: {}", &output_path)
                         }
                     }
                 }
@@ -202,7 +202,6 @@ pub fn filter_sensor(
     mut sensor: Sensor,
     start_timestamp: Option<NaiveDateTime>,
     end_timestamp: Option<NaiveDateTime>,
-    debug: bool,
 ) -> Sensor {
     if let Some(start) = start_timestamp {
         let mut filtered_logs: Vec<TemperatureLog> = Vec::new();
@@ -282,12 +281,12 @@ pub fn filter_sensor(
         };
     }
 
-    if debug {
+    if cfg!(debug_assertions) {
         // Generate output file for debugging/reference
         let output_path = "sensor_".to_owned() + &sensor.serial + "_filtered_output.txt";
         if let Some(mut output) = File::create(&output_path).ok() {
             if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
-                println!(
+                log::info!(
                     "Filtered output from {:?} - {:?} to: {}",
                     start_timestamp, end_timestamp, &output_path
                 );
@@ -347,7 +346,6 @@ mod tests {
             sample_sensor(),
             Some(start_timestamp),
             Some(end_timestamp),
-            true,
         );
         if let Some(breaches) = sensor.breaches {
             assert_eq!(breaches[0].start_timestamp, start_timestamp); // start of hot breach changed
@@ -365,7 +363,6 @@ mod tests {
             sample_sensor(),
             Some(start_timestamp),
             Some(end_timestamp),
-            true,
         );
         if let Some(logs) = sensor.logs {
             assert_eq!(logs[0].timestamp, start_timestamp); // start of hot breach changed
