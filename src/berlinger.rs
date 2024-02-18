@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{Duration, Local, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, TimeZone};
 use serde_json::{json, Value};
 use std::fs;
 use std::fs::File;
@@ -257,17 +257,40 @@ fn parse_string(json_str: &Value) -> String {
 
 fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
     let parsed_string = parse_string(json_str);
-    NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").ok()
+    let datetime_timestamp =
+        NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").unwrap();
+    let local = match Local.from_local_datetime(&datetime_timestamp) {
+        LocalResult::None => return None,
+        LocalResult::Single(r) => r,
+        LocalResult::Ambiguous(r, _) => r,
+    };
+    Some(local.naive_utc())
 }
 
 fn parse_date(json_str: &Value) -> Option<NaiveDate> {
     let parsed_string = parse_string(json_str);
-    NaiveDate::parse_from_str(&parsed_string, "%Y-%m-%d").ok()
+    let date_timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").unwrap();
+    let local = match Local.from_local_datetime(&date_timestamp) {
+        LocalResult::None => return None,
+        LocalResult::Single(r) => r,
+        LocalResult::Ambiguous(r, _) => r,
+    }
+    .naive_utc()
+    .date();
+    Some(local)
 }
 
 fn parse_time(json_str: &Value) -> Option<NaiveTime> {
     let parsed_string = parse_string(json_str);
-    NaiveTime::parse_from_str(&parsed_string, "%H:%M").ok()
+    let time_timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%H:%M").unwrap();
+    let local = match Local.from_local_datetime(&time_timestamp) {
+        LocalResult::None => return None,
+        LocalResult::Single(r) => r,
+        LocalResult::Ambiguous(r, _) => r,
+    }
+    .naive_utc()
+    .time();
+    Some(local)
 }
 
 fn parse_int(json_str: &Value) -> Option<i64> {
@@ -464,18 +487,18 @@ fn parse_fridgetag_breach(
     }
 
     if valid_breach {
-
         let breach_start_timestamp = NaiveDateTime::new(breach_date, start_time);
         let mut breach_end_timestamp = breach_start_timestamp + breach_duration; // only true for consecutive breaches, but this is all the data we have for FridgeTags
 
-        if breach_end_timestamp.date() > breach_date { // FridgeTag breach can't go into next day
+        if breach_end_timestamp.date() > breach_date {
+            // FridgeTag breach can't go into next day
             breach_end_timestamp = NaiveDateTime::new(breach_date, zero_time) + Duration::days(1);
         }
 
         let temperature_breach = TemperatureBreach {
             breach_type: breach_type,
             start_timestamp: breach_start_timestamp,
-            end_timestamp: breach_end_timestamp, 
+            end_timestamp: breach_end_timestamp,
             duration: breach_duration,
             acknowledged: false,
         };
