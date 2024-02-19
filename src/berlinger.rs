@@ -264,7 +264,7 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
     return match datetime_timestamp {
         None => None,
         Some(datetime) => {
-            let result = NaiveDateTime::checked_add_offset(datetime, *Local::now().offset());
+            let result = NaiveDateTime::checked_sub_offset(datetime, *Local::now().offset());
             println!("result: {:?}", result);
             return result;
         }
