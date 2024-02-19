@@ -263,7 +263,11 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
     let datetime_timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").ok();
     return match datetime_timestamp {
         None => None,
-        Some(datetime) => NaiveDateTime::checked_add_offset(datetime, *Local::now().offset()),
+        Some(datetime) => {
+            let result = NaiveDateTime::checked_add_offset(datetime, *Local::now().offset());
+            println!("result: {:?}", result);
+            return result;
+        }
     };
 }
 
