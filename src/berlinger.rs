@@ -1,13 +1,14 @@
 use chrono::{
     format::{parse, Parsed, StrftimeItems},
-    DateTime, Duration, Local, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, TimeZone,
+    DateTime, Duration, Local, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeDelta,
+    TimeZone,
 };
 use serde_json::{json, Value};
-use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::BufRead;
 use std::path::Path;
+use std::{fmt::Debug, fs};
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 use rs_drivelist::drive_list;
@@ -263,22 +264,44 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
     let datetime_timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").ok();
     return match datetime_timestamp {
         None => None,
-        Some(datetime) => {
-            let result = NaiveDateTime::checked_sub_offset(datetime, *Local::now().offset());
-            println!("result: {:?}", result);
-            return result;
+        Some(datetime_timestamp) => {
+            NaiveDateTime::checked_sub_offset(datetime_timestamp, *Local::now().offset())
         }
     };
 }
 
 fn parse_date(json_str: &Value) -> Option<NaiveDate> {
     let parsed_string = parse_string(json_str);
-    NaiveDate::parse_from_str(&parsed_string, "%Y-%m-%d").ok()
+    let date_timestamp = NaiveDate::parse_from_str(&parsed_string, "%Y-%m-%d").ok();
+    return match date_timestamp {
+        None => None,
+        Some(date_timestamp) => {
+            let time_delta =
+                TimeDelta::new(i64::from(Local::now().offset().fix().local_minus_utc()), 0);
+            match time_delta {
+                None => None,
+                Some(time_delta) => NaiveDate::checked_sub_signed(date_timestamp, time_delta),
+            }
+        }
+    };
 }
 
 fn parse_time(json_str: &Value) -> Option<NaiveTime> {
     let parsed_string = parse_string(json_str);
-    NaiveTime::parse_from_str(&parsed_string, "%H:%M").ok()
+    let time_timestamp = NaiveTime::parse_from_str(&parsed_string, "%H:%M").ok();
+    return match time_timestamp {
+        None => None,
+        Some(time_timestamp) => {
+            let time_delta =
+                TimeDelta::new(i64::from(Local::now().offset().fix().local_minus_utc()), 0);
+            match time_delta {
+                None => None,
+                Some(time_delta) => {
+                    return Some(NaiveTime::overflowing_sub_signed(&time_timestamp, time_delta).0);
+                }
+            }
+        }
+    };
 }
 
 fn parse_int(json_str: &Value) -> Option<i64> {
