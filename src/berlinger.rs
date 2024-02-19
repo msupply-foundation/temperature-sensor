@@ -257,7 +257,9 @@ fn parse_string(json_str: &Value) -> String {
 
 fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
     let parsed_string = parse_string(json_str);
-    NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").ok()
+    let timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").ok();
+    println!("timestamp format: {:?}", timestamp);
+    timestamp
 }
 
 fn parse_date(json_str: &Value) -> Option<NaiveDate> {
@@ -464,18 +466,18 @@ fn parse_fridgetag_breach(
     }
 
     if valid_breach {
-
         let breach_start_timestamp = NaiveDateTime::new(breach_date, start_time);
         let mut breach_end_timestamp = breach_start_timestamp + breach_duration; // only true for consecutive breaches, but this is all the data we have for FridgeTags
 
-        if breach_end_timestamp.date() > breach_date { // FridgeTag breach can't go into next day
+        if breach_end_timestamp.date() > breach_date {
+            // FridgeTag breach can't go into next day
             breach_end_timestamp = NaiveDateTime::new(breach_date, zero_time) + Duration::days(1);
         }
 
         let temperature_breach = TemperatureBreach {
             breach_type: breach_type,
             start_timestamp: breach_start_timestamp,
-            end_timestamp: breach_end_timestamp, 
+            end_timestamp: breach_end_timestamp,
             duration: breach_duration,
             acknowledged: false,
         };
