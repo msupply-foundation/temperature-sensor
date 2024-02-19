@@ -259,17 +259,21 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
     let parsed_string = parse_string(json_str);
     let datetime_timestamp =
         NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").unwrap();
+    println!("datetime_timestamp {:?}", datetime_timestamp);
     let local = match Local.from_local_datetime(&datetime_timestamp) {
         LocalResult::None => return None,
         LocalResult::Single(r) => r,
         LocalResult::Ambiguous(r, _) => r,
     };
+    println!("local {:?}", local);
     Some(local.naive_utc())
 }
 
 fn parse_date(json_str: &Value) -> Option<NaiveDate> {
     let parsed_string = parse_string(json_str);
     let date_timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").unwrap();
+    println!("date_timestamp {:?}", date_timestamp);
+
     let local = match Local.from_local_datetime(&date_timestamp) {
         LocalResult::None => return None,
         LocalResult::Single(r) => r,
@@ -277,12 +281,14 @@ fn parse_date(json_str: &Value) -> Option<NaiveDate> {
     }
     .naive_utc()
     .date();
+    println!("local {:?}", local);
     Some(local)
 }
 
 fn parse_time(json_str: &Value) -> Option<NaiveTime> {
     let parsed_string = parse_string(json_str);
     let time_timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%H:%M").unwrap();
+    println!("time_timestamp {:?}", time_timestamp);
     let local = match Local.from_local_datetime(&time_timestamp) {
         LocalResult::None => return None,
         LocalResult::Single(r) => r,
@@ -290,6 +296,7 @@ fn parse_time(json_str: &Value) -> Option<NaiveTime> {
     }
     .naive_utc()
     .time();
+    println!("local {:?}", local);
     Some(local)
 }
 
