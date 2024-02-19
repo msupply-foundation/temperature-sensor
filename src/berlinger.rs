@@ -3,6 +3,7 @@ use chrono::{
     DateTime, Duration, Local, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeDelta,
     TimeZone,
 };
+use log::info;
 use serde_json::{json, Value};
 use std::fs::File;
 use std::io;
@@ -263,7 +264,10 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
     let parsed_string = parse_string(json_str);
     let datetime_timestamp = NaiveDateTime::parse_from_str(&parsed_string, "%Y-%m-%d %H:%M").ok();
     return match datetime_timestamp {
-        None => None,
+        None => {
+            info!("failed to parse str to NaiveDateTime");
+            None
+        }
         Some(datetime_timestamp) => {
             NaiveDateTime::checked_sub_offset(datetime_timestamp, *Local::now().offset())
         }
@@ -274,12 +278,18 @@ fn parse_date(json_str: &Value) -> Option<NaiveDate> {
     let parsed_string = parse_string(json_str);
     let date_timestamp = NaiveDate::parse_from_str(&parsed_string, "%Y-%m-%d").ok();
     return match date_timestamp {
-        None => None,
+        None => {
+            info!("failed to parse str to NaiveDate");
+            None
+        }
         Some(date_timestamp) => {
             let time_delta =
                 TimeDelta::new(i64::from(Local::now().offset().fix().local_minus_utc()), 0);
             match time_delta {
-                None => None,
+                None => {
+                    info!("failed to generate time_delta for NaiveDate");
+                    None
+                }
                 Some(time_delta) => NaiveDate::checked_sub_signed(date_timestamp, time_delta),
             }
         }
@@ -290,12 +300,18 @@ fn parse_time(json_str: &Value) -> Option<NaiveTime> {
     let parsed_string = parse_string(json_str);
     let time_timestamp = NaiveTime::parse_from_str(&parsed_string, "%H:%M").ok();
     return match time_timestamp {
-        None => None,
+        None => {
+            info!("failed to parse str to NaiveTime");
+            None
+        }
         Some(time_timestamp) => {
             let time_delta =
                 TimeDelta::new(i64::from(Local::now().offset().fix().local_minus_utc()), 0);
             match time_delta {
-                None => None,
+                None => {
+                    info!("failed to generate time_delta for NaiveTime");
+                    None
+                }
                 Some(time_delta) => {
                     return Some(NaiveTime::overflowing_sub_signed(&time_timestamp, time_delta).0);
                 }
