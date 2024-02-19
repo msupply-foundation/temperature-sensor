@@ -1,8 +1,4 @@
-use chrono::{
-    format::{parse, Parsed, StrftimeItems},
-    DateTime, Duration, Local, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeDelta,
-    TimeZone,
-};
+use chrono::{Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeDelta};
 use log::info;
 use serde_json::{json, Value};
 use std::fs::File;
@@ -270,7 +266,10 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
         }
         Some(datetime_timestamp) => {
             println!("got datetime_timestamp ok");
-            NaiveDateTime::checked_sub_offset(datetime_timestamp, *Local::now().offset())
+            let naive_datetime =
+                NaiveDateTime::checked_sub_offset(datetime_timestamp, *Local::now().offset());
+            println!("got this naive_datetime: {:?}", naive_datetime);
+            naive_datetime
         }
     };
 }
