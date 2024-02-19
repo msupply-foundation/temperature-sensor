@@ -269,6 +269,7 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
             None
         }
         Some(datetime_timestamp) => {
+            println!("got datetime_timestamp ok");
             NaiveDateTime::checked_sub_offset(datetime_timestamp, *Local::now().offset())
         }
     };
@@ -283,6 +284,7 @@ fn parse_date(json_str: &Value) -> Option<NaiveDate> {
             None
         }
         Some(date_timestamp) => {
+            println!("got date_timestamp ok");
             let time_delta =
                 TimeDelta::new(i64::from(Local::now().offset().fix().local_minus_utc()), 0);
             match time_delta {
@@ -305,6 +307,7 @@ fn parse_time(json_str: &Value) -> Option<NaiveTime> {
             None
         }
         Some(time_timestamp) => {
+            println!("got time_timestamp ok");
             let time_delta =
                 TimeDelta::new(i64::from(Local::now().offset().fix().local_minus_utc()), 0);
             match time_delta {
