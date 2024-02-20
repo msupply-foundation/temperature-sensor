@@ -1,4 +1,4 @@
-use chrono::{Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeDelta};
+use chrono::{Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeDelta, TimeZone};
 use log::info;
 use serde_json::{json, Value};
 use std::fs::File;
@@ -265,36 +265,43 @@ fn parse_timestamp(json_str: &Value) -> Option<NaiveDateTime> {
             None
         }
         Some(datetime_timestamp) => {
-            println!("got datetime_timestamp ok");
-            let naive_datetime =
-                NaiveDateTime::checked_sub_offset(datetime_timestamp, *Local::now().offset());
-            println!("got this naive_datetime: {:?}", naive_datetime);
-            naive_datetime
+            let local_datetime_timestamp = match Local.from_local_datetime(&datetime_timestamp) {
+                chrono::LocalResult::None => None,
+                chrono::LocalResult::Ambiguous(r, _) => Some(r.naive_utc()),
+                chrono::LocalResult::Single(r) => Some(r.naive_utc()),
+            };
+            local_datetime_timestamp
+            //         println!("got datetime_timestamp ok");
+            //         let naive_datetime =
+            //             NaiveDateTime::checked_sub_offset(datetime_timestamp, *Local::now().offset());
+            //         println!("got this naive_datetime: {:?}", naive_datetime);
+            //         naive_datetime
+            //     }
         }
     };
 }
 
 fn parse_date(json_str: &Value) -> Option<NaiveDate> {
     let parsed_string = parse_string(json_str);
-    let date_timestamp = NaiveDate::parse_from_str(&parsed_string, "%Y-%m-%d").ok();
-    return match date_timestamp {
-        None => {
-            info!("failed to parse str to NaiveDate");
-            None
-        }
-        Some(date_timestamp) => {
-            println!("got date_timestamp ok");
-            let time_delta =
-                TimeDelta::new(i64::from(Local::now().offset().fix().local_minus_utc()), 0);
-            match time_delta {
-                None => {
-                    info!("failed to generate time_delta for NaiveDate");
-                    None
-                }
-                Some(time_delta) => NaiveDate::checked_sub_signed(date_timestamp, time_delta),
-            }
-        }
-    };
+    NaiveDate::parse_from_str(&parsed_string, "%Y-%m-%d").ok()
+    // return match date_timestamp {
+    //     None => {
+    //         info!("failed to parse str to NaiveDate");
+    //         None
+    //     }
+    //     Some(date_timestamp) => {
+    //         println!("got date_timestamp ok");
+    //         let time_delta =
+    //             TimeDelta::new(i64::from(Local::date().offset().fix().local_minus_utc()), 0);
+    //         match time_delta {
+    //             None => {
+    //                 info!("failed to generate time_delta for NaiveDate");
+    //                 None
+    //             }
+    //             Some(time_delta) => NaiveDate::checked_sub_signed(date_timestamp, time_delta),
+    //         }
+    //     }
+    // };
 }
 
 fn parse_time(json_str: &Value) -> Option<NaiveTime> {
