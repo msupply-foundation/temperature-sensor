@@ -8,9 +8,76 @@
 //! It has been implemented for use in our open mSupply LMIS software, which
 //! is being rewritten in Rust <https://msupply.foundation/projects/omsupply>.
 //!
-//! So far it only supports Berlinger FridgeTag and QTag USB sensors
+//! So far it only supports Berlinger Fridge-tag and Q-tag USB sensors
 //! <https://www.berlinger.com/cold-chain-management> but it is hoped to extend
 //! it to other sensor types in future.
+//!
+//! (1) Berlinger Fridge-tags without logging e.g. Fridge-tag 2 or Fridge-tag UL:
+//!
+//! Temperature logs are only recorded for the max & min temperature each day, and
+//! only cumulative breaches (from midnight to midnight) are recorded, where:
+//!     Alarm=0 => cold (cumulative) breach
+//!     Alarm=1 => hot (cumulative) breach
+//!
+//! Note that the sensor doesn't record the start or end of the breach, only the time
+//! when the breach was triggered and the total duration of the breach
+//! => we work out the breach start time by subtracting the breach config duration
+//! from the breach trigger time (or midnight if that is later) and we work out
+//! the breach end time by adding the total breach duration to the breach start time
+//! (or midnight if that is earlier).
+//!
+//! Obviously, these calculations will only be correct if the breach is continuous i.e.
+//! there are no gaps when the temperature is not breaching, but it's the best that can
+//! be done with the limited data available.
+//!
+//! (2) Berlinger Fridge-tags with logging e.g. Fridge-tag 2L:
+//!
+//! These record breaches in the same way and have the same limitations, but they also
+//! record full temperature logs (usually every 5 minutes) => it would be possible to
+//! "correct" the calculated breach start and end times by processing the temperature
+//! logs for the same day by applying the following 3 sets of rules:
+//!
+//! (a) expand the start & end times based on the first & last breaching temperature logs
+//! of the day:
+//!    - if the first breaching temperature log is before the calculated breach start time,
+//!      then set the breach start time to the temperature log time.
+//!    - if the last breaching temperature log is after the calculated breach end time,
+//!      then set the breach end time to the temperature log time.
+//!
+//! (b) take account of the sensor log interval at the start & end of the day:
+//!    - if the first breaching temperature log is within the sensor log interval of
+//!      midnight, then set the breach start time to midnight.
+//!    - if the last breaching temperature log is within the sensor log interval of
+//!      midnight, then set the breach end time to midnight.
+//!
+//! (c) correct for other discrepancies when it's a non-continuous breach:
+//!    - if the first breaching temperature log is more than the sensor log interval
+//!      after the calculated breach start time, then set the breach start time to the
+//!      temperature log time.
+//!    - if the last breaching temperature log is more than the sensor log interval
+//!      before the calculated breach end time, then set the breach end time to the
+//!      temperature log time.
+//!
+//! As we have the temperature logs, we can use these to detect consecutive breaches,
+//! assuming that the same breach configurations apply (i.e. the same temperature &
+//! duration thresholds). Unlike cumulative breaches, which are only midnight to midnight,
+//! consecutive breaches have the potential to cover more than one day if they are ongoing
+//! at midnight, and of course you can have multiple consecutive breaches per day.
+//!
+//! (3) Berlinger Q-tags (all with logging?) e.g. Q-tag CLm doc LR:
+//!
+//! These can have up to 5 breach configurations, each having one of the following types:
+//!     Alarm type=1 => cold consecutive breach
+//!     Alarm type=2 => hot consecutive breach
+//!     Alarm type=3 => cold cumulative breach
+//!     Alarm type=4 => hot cumulative breach
+//!
+//! Q-tags record the start and end time (and duration) of consecutive breaches,
+//! although they only record the start time of cumulative breaches, so the end time
+//! still needs to be calculated in the same way as for Fridge-tags i.e. by adding the
+//! breach duration to the start time. For non-continuous cumulative breaches, the
+//! true end time can be calculated from the last breaching temperature log of the day.
+//!
 
 pub mod berlinger;
 pub mod common;
@@ -150,7 +217,7 @@ pub fn parse_sensor(file_contents: &str) -> Result<Sensor, String> {
     if let Some(mut output) = File::create(&file_path).ok() {
         if write!(output, "{}", file_contents).is_ok() {
             log::info!("Reading sensor from: {}", &file_path);
-            return read_sensor_file(&file_path)
+            return read_sensor_file(&file_path);
         }
     }
     Err("Sensor file not created".to_string())
@@ -288,7 +355,9 @@ pub fn filter_sensor(
             if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
                 log::info!(
                     "Filtered output from {:?} - {:?} to: {}",
-                    start_timestamp, end_timestamp, &output_path
+                    start_timestamp,
+                    end_timestamp,
+                    &output_path
                 );
             }
         }
@@ -342,11 +411,7 @@ mod tests {
             NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
         let end_timestamp =
             NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let sensor = filter_sensor(
-            sample_sensor(),
-            Some(start_timestamp),
-            Some(end_timestamp),
-        );
+        let sensor = filter_sensor(sample_sensor(), Some(start_timestamp), Some(end_timestamp));
         if let Some(breaches) = sensor.breaches {
             assert_eq!(breaches[0].start_timestamp, start_timestamp); // start of hot breach changed
             assert_eq!(breaches[1].end_timestamp, end_timestamp); // end of cold breach changed
@@ -359,11 +424,7 @@ mod tests {
             NaiveDateTime::parse_from_str("2023-05-23 13:07:00", "%Y-%m-%d %H:%M:%S").unwrap();
         let end_timestamp =
             NaiveDateTime::parse_from_str("2023-05-23 13:15:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let sensor = filter_sensor(
-            sample_sensor(),
-            Some(start_timestamp),
-            Some(end_timestamp),
-        );
+        let sensor = filter_sensor(sample_sensor(), Some(start_timestamp), Some(end_timestamp));
         if let Some(logs) = sensor.logs {
             assert_eq!(logs[0].timestamp, start_timestamp); // start of hot breach changed
             assert_eq!(logs[8].timestamp, end_timestamp); // end of cold breach changed
