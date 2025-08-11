@@ -6,9 +6,7 @@ use std::io;
 use std::io::BufRead;
 use std::path::Path;
 
-use crate::common::{
-    Sensor, SensorType, TemperatureLog,
-};
+use crate::common::{Sensor, SensorType, TemperatureLog};
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
@@ -28,18 +26,19 @@ fn read_sensor_to_json(file_path: &str) -> Value {
     if let Ok(lines) = read_lines(file_path) {
         for line in lines {
             if let Ok(contents) = line {
-                
                 let elements: Vec<&str> = contents.split(",").collect();
 
-                if elements.len() == 2 { // Config/status
+                if elements.len() == 2 {
+                    // Config/status
                     json_tag = elements[0].to_string();
                     json_value = elements[1];
                     current_json[json_tag] = json_value.into();
                 }
 
-                if elements.len() > 3 { // Temperature logs
-                    let json_timestamp = format!("{} {}",elements[1],elements[2]); // concatenate date & time
-                    // timestamp & temperature columns expected
+                if elements.len() > 3 {
+                    // Temperature logs
+                    let json_timestamp = format!("{} {}", elements[1], elements[2]); // concatenate date & time
+                                                                                     // timestamp & temperature columns expected
                     data_timestamps.push(json_timestamp.into());
                     data_temperatures.push(elements[3].into());
                 }
@@ -81,7 +80,7 @@ fn parse_duration(json_str: &Value) -> Option<Duration> {
     let parsed_string = parse_string(json_str);
 
     if let Some(_index) = parsed_string.find(" seconds") {
-        if let Some(seconds) = parsed_string.replace(" seconds","").parse::<i64>().ok() {
+        if let Some(seconds) = parsed_string.replace(" seconds", "").parse::<i64>().ok() {
             Some(Duration::seconds(seconds))
         } else {
             None
@@ -128,7 +127,7 @@ fn parse_logs(json_str: &Value) -> Option<Vec<TemperatureLog>> {
 pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
     if Path::new(file_path).exists() {
         let file_as_json = read_sensor_to_json(file_path);
-       
+
         let sensor = Sensor {
             sensor_type: SensorType::LogTag,
             serial: parse_string(&file_as_json["Serial #"]),

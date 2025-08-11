@@ -80,8 +80,8 @@
 //!
 
 pub mod berlinger;
-pub mod logtag;
 pub mod common;
+pub mod logtag;
 
 use std::fs;
 use std::fs::File;
@@ -182,12 +182,12 @@ fn sensor_type_from_filename(file_path: &str) -> SensorType {
 
 /// Returns all sensors found from currently mounted USB drives up to 8GB capacity
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
-/// 
+///
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
-/// 
+///
 /// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
-/// 
+///
 pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
     if let Some(sensor_array) = read_sensors_from_usb() {
         Ok(sensor_array)
@@ -198,12 +198,12 @@ pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
 
 /// Returns all the serials found from currently mounted USB drives up to 8GB capacity
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
-/// 
+///
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
-/// 
+///
 /// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
-/// 
+///
 pub fn read_connected_serials() -> Result<Vec<String>, String> {
     if let Some(sensor_serials) = read_sensor_serials() {
         log::info!("Serials found: {:?}", sensor_serials);
@@ -215,9 +215,7 @@ pub fn read_connected_serials() -> Result<Vec<String>, String> {
 
 /// Reads sensor data from the specified sensor txt file.
 pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
-    
     match sensor_type_from_filename(file_path) {
-
         SensorType::Berlinger => {
             if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
                 if cfg!(debug_assertions) {
@@ -409,7 +407,6 @@ pub fn filter_sensor(
     return sensor;
 }
 
-
 #[cfg(target_os = "macos")]
 fn sensor_volume_paths() -> Vec<String> {
     let mut volume_list: Vec<String> = Vec::new();
@@ -540,12 +537,12 @@ pub fn sensor_serial_from_file_path(txt_file_path: &str) -> Option<String> {
 
 /// Returns all the serials found from currently mounted USB drives up to 8GB capacity
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
-/// 
+///
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
-/// 
+///
 /// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
-/// 
+///
 pub fn read_sensor_serials() -> Option<Vec<String>> {
     let mut serial_list: Vec<String> = Vec::new();
 
@@ -564,19 +561,17 @@ pub fn read_sensor_serials() -> Option<Vec<String>> {
 
 /// Returns all sensors found from currently mounted USB drives up to 8GB capacity
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
-/// 
+///
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
-/// 
+///
 /// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
-/// 
+///
 pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
     let mut sensors: Vec<Sensor> = Vec::new();
 
     for txt_file_path in sensor_file_list() {
-
         match sensor_type_from_filename(&txt_file_path) {
-
             SensorType::Berlinger => {
                 if let Some(sensor) = berlinger::read_sensor_from_file(&txt_file_path) {
                     sensors.push(sensor.clone())

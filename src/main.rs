@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.len() > 1 {
         // try specified file name
         let file_path = args[1].trim();
-        
+
         sensor = temperature_sensor::read_sensor_file(&file_path)?;
         if let Some(timestamp) = sensor.last_connected_timestamp {
             start_timestamp = Some(timestamp - Duration::days(3)); // go back from 3 days
