@@ -80,10 +80,16 @@
 //!
 
 pub mod berlinger;
+pub mod logtag;
 pub mod common;
 
+use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
+
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+use rs_drivelist::drive_list;
 
 pub use crate::common::{
     BreachType, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig, TemperatureLog,
@@ -166,12 +172,24 @@ pub fn sample_sensor() -> Sensor {
     sensor
 }
 
+fn sensor_type_from_filename(file_path: &str) -> SensorType {
+    if file_path.contains("LogTag") {
+        SensorType::LogTag
+    } else {
+        SensorType::Berlinger
+    }
+}
+
 /// Returns all sensors found from currently mounted USB drives up to 8GB capacity
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// 
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
+/// 
+/// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
+/// 
 pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
-    if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
+    if let Some(sensor_array) = read_sensors_from_usb() {
         Ok(sensor_array)
     } else {
         Err("No sensors found".to_string())
@@ -180,10 +198,14 @@ pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
 
 /// Returns all the serials found from currently mounted USB drives up to 8GB capacity
 /// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// 
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
+/// 
+/// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
+/// 
 pub fn read_connected_serials() -> Result<Vec<String>, String> {
-    if let Some(sensor_serials) = berlinger::read_sensor_serials() {
+    if let Some(sensor_serials) = read_sensor_serials() {
         log::info!("Serials found: {:?}", sensor_serials);
         Ok(sensor_serials)
     } else {
@@ -193,20 +215,41 @@ pub fn read_connected_serials() -> Result<Vec<String>, String> {
 
 /// Reads sensor data from the specified sensor txt file.
 pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
-    if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
-        if cfg!(debug_assertions) {
-            // Generate output file for debugging/reference
-            let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
-            if let Some(mut output) = File::create(&output_path).ok() {
-                if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
-                    log::info!("Output: {}", &output_path)
+    
+    match sensor_type_from_filename(file_path) {
+
+        SensorType::Berlinger => {
+            if let Some(sensor) = berlinger::read_sensor_from_file(&file_path) {
+                if cfg!(debug_assertions) {
+                    // Generate output file for debugging/reference
+                    let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
+                    if let Some(mut output) = File::create(&output_path).ok() {
+                        if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
+                            log::info!("Output: {}", &output_path)
+                        }
+                    }
                 }
+                Ok(sensor)
+            } else {
+                Err("Sensor file not found".to_string())
             }
         }
-
-        Ok(sensor)
-    } else {
-        Err("Sensor file not found".to_string())
+        SensorType::LogTag => {
+            if let Some(sensor) = logtag::read_sensor_from_file(&file_path) {
+                if cfg!(debug_assertions) {
+                    // Generate output file for debugging/reference
+                    let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
+                    if let Some(mut output) = File::create(&output_path).ok() {
+                        if write!(output, "{}", format!("{:?}\n\n", sensor)).is_ok() {
+                            log::info!("Output: {}", &output_path)
+                        }
+                    }
+                }
+                Ok(sensor)
+            } else {
+                Err("Sensor file not found".to_string())
+            }
+        }
     }
 }
 
@@ -227,7 +270,7 @@ pub fn parse_sensor(file_contents: &str) -> Result<Sensor, String> {
 /// Note that the serial is expected to match the corresponding serial field inside
 /// the txt file.
 pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
-    if let Some(sensor_array) = berlinger::read_sensors_from_usb() {
+    if let Some(sensor_array) = read_sensors_from_usb() {
         for sensor in sensor_array {
             if sensor.serial == serial.to_string() {
                 log::info!("Found sensor: {}", serial);
@@ -364,6 +407,195 @@ pub fn filter_sensor(
     }
 
     return sensor;
+}
+
+
+#[cfg(target_os = "macos")]
+fn sensor_volume_paths() -> Vec<String> {
+    let mut volume_list: Vec<String> = Vec::new();
+
+    if let Ok(entries) = fs::read_dir("/Volumes") {
+        // loop over folders in Volumes
+        for entry in entries {
+            if let Ok(entry) = entry {
+                if entry.path().is_dir() {
+                    if let Some(txt_file_path) = entry.path().to_str() {
+                        volume_list.push(txt_file_path.to_string())
+                    }
+                }
+            }
+        }
+    }
+    volume_list
+}
+
+#[cfg(target_os = "android")]
+fn sensor_volume_paths() -> Vec<String> {
+    let mut volume_list: Vec<String> = Vec::new();
+
+    if let Ok(entries) = fs::read_dir("/mnt/media_rw") {
+        // loop over mounted media folders
+        for entry in entries {
+            if let Ok(entry) = entry {
+                if entry.path().is_dir() {
+                    if let Some(txt_file_path) = entry.path().to_str() {
+                        volume_list.push(txt_file_path.to_string())
+                    }
+                }
+            }
+        }
+    }
+    volume_list
+}
+
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+fn sensor_volume_paths() -> Vec<String> {
+    let mut volume_list: Vec<String> = Vec::new();
+
+    match drive_list() {
+        Err(err) => log::error!("No drives found: {}", err),
+        Ok(drives) => {
+            for drive_index in 0..drives.len() {
+                // loop over all detected drives
+
+                let mount_points = &drives[drive_index].mountpoints;
+                for partition_index in 0..mount_points.len() {
+                    // loop over partitions
+                    let mount_point = &mount_points[partition_index];
+
+                    if mount_point.totalBytes < Some(8 * 1024 * 1024 * 1024) {
+                        // possible USB drive if < 8 GB
+                        volume_list.push(mount_point.path.clone());
+                    }
+                }
+            }
+        }
+    }
+
+    volume_list
+}
+
+fn sensor_file_list() -> Vec<String> {
+    let mut file_list: Vec<String> = Vec::new();
+
+    for volume_root in sensor_volume_paths() {
+        // loop over volumes
+
+        if let Ok(entries) = fs::read_dir(&volume_root) {
+            // loop over files in the volume root
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    if let Some(extension) = entry.path().extension() {
+                        if extension == "txt" {
+                            // might be a Berlinger sensor txt file
+                            if let Some(txt_file_path) = entry.path().to_str() {
+                                let pdf_file_path = txt_file_path.replace(".txt", ".pdf");
+
+                                if Path::new(&pdf_file_path).exists() {
+                                    // but only if it has a matching PDF
+                                    file_list.push(txt_file_path.to_string())
+                                }
+                            }
+                        };
+                        if extension == "csv" {
+                            // might be a LogTag sensor CSV file
+                            if let Some(txt_file_path) = entry.path().to_str() {
+                                file_list.push(txt_file_path.to_string())
+                            }
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    file_list
+}
+
+pub fn sensor_serial_from_file_path(txt_file_path: &str) -> Option<String> {
+    let mut valid_serial = false;
+    let mut serial = "";
+    let file_path = Path::new(&txt_file_path);
+
+    if file_path.exists() {
+        if let Some(os_file_name) = file_path.file_name() {
+            if let Some(file_name) = os_file_name.to_str() {
+                let elements: Vec<&str> = file_name.split("_").collect();
+                if elements[0] == "LogTag" {
+                    serial = elements[1];
+                } else {
+                    serial = elements[0];
+                }
+                valid_serial = true;
+            }
+        }
+    }
+
+    if valid_serial {
+        Some(serial.to_string())
+    } else {
+        None
+    }
+}
+
+/// Returns all the serials found from currently mounted USB drives up to 8GB capacity
+/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// 
+/// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
+/// together with a matching PDF file (USB drives can have multiple pairs of files).
+/// 
+/// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
+/// 
+pub fn read_sensor_serials() -> Option<Vec<String>> {
+    let mut serial_list: Vec<String> = Vec::new();
+
+    for txt_file_path in sensor_file_list() {
+        if let Some(serial) = sensor_serial_from_file_path(&txt_file_path) {
+            serial_list.push(serial)
+        }
+    }
+
+    if serial_list.len() > 0 {
+        Some(serial_list)
+    } else {
+        None
+    }
+}
+
+/// Returns all sensors found from currently mounted USB drives up to 8GB capacity
+/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// 
+/// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
+/// together with a matching PDF file (USB drives can have multiple pairs of files).
+/// 
+/// For LogTag sensors, it expects to find a LogTag_serial_xxxxx.csv file in the root folder
+/// 
+pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
+    let mut sensors: Vec<Sensor> = Vec::new();
+
+    for txt_file_path in sensor_file_list() {
+
+        match sensor_type_from_filename(&txt_file_path) {
+
+            SensorType::Berlinger => {
+                if let Some(sensor) = berlinger::read_sensor_from_file(&txt_file_path) {
+                    sensors.push(sensor.clone())
+                };
+            }
+
+            SensorType::LogTag => {
+                if let Some(sensor) = logtag::read_sensor_from_file(&txt_file_path) {
+                    sensors.push(sensor.clone())
+                };
+            }
+        }
+    }
+
+    if sensors.len() > 0 {
+        Some(sensors)
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
