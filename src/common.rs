@@ -23,7 +23,8 @@ pub enum BreachType {
 #[derive(Debug, Clone)]
 /// Define the sensor types supported.
 pub enum SensorType {
-    Berlinger, // only Berlinger so far
+    Berlinger, // FridgeTag/QTag
+    LogTag,
 }
 
 #[derive(Debug, Clone)]
