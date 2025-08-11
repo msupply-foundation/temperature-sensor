@@ -518,10 +518,15 @@ pub fn sensor_serial_from_file_path(txt_file_path: &str) -> Option<String> {
         if let Some(os_file_name) = file_path.file_name() {
             if let Some(file_name) = os_file_name.to_str() {
                 let elements: Vec<&str> = file_name.split("_").collect();
-                if elements[0] == "LogTag" {
-                    serial = elements[1];
-                } else {
-                    serial = elements[0];
+
+                match sensor_type_from_filename(&txt_file_path) {
+                    SensorType::Berlinger => {
+                        serial = elements[0];
+                    }
+
+                    SensorType::LogTag => {
+                        serial = elements[1];
+                    }
                 }
                 valid_serial = true;
             }
