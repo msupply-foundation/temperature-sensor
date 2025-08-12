@@ -75,13 +75,25 @@ fn parse_float(json_str: &Value) -> Option<f64> {
 }
 
 fn parse_duration(json_str: &Value) -> Option<Duration> {
-    // in seconds
+    // can be in seconds, minutes or hours
 
     let parsed_string = parse_string(json_str);
 
     if let Some(_index) = parsed_string.find(" seconds") {
         if let Some(seconds) = parsed_string.replace(" seconds", "").parse::<i64>().ok() {
             Some(Duration::seconds(seconds))
+        } else {
+            None
+        }
+    } else if let Some(_index) = parsed_string.find(" minutes") {
+        if let Some(minutes) = parsed_string.replace(" minutes", "").parse::<i64>().ok() {
+            Some(Duration::minutes(minutes))
+        } else {
+            None
+        }
+    } else if let Some(_index) = parsed_string.find(" hours") {
+        if let Some(hours) = parsed_string.replace(" hours", "").parse::<i64>().ok() {
+            Some(Duration::hours(hours))
         } else {
             None
         }
