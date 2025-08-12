@@ -6,7 +6,7 @@ use std::io;
 use std::io::BufRead;
 use std::path::Path;
 
-use crate::common::{Sensor, SensorType, TemperatureLog};
+use crate::common::{BreachType, Sensor, SensorType, TemperatureBreachConfig, TemperatureLog};
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
@@ -90,6 +90,58 @@ fn parse_duration(json_str: &Value) -> Option<Duration> {
     }
 }
 
+fn parse_breach_configs(
+    json_str: &Value,
+) -> Option<Vec<TemperatureBreachConfig>> {
+    let mut breach_configs: Vec<TemperatureBreachConfig> = Vec::new();
+    let max_breach_temperature = 100.0; // boiling point of water (should be safe default max!)
+    let min_breach_temperature = -273.0; // absolute zero (should be safe default min!)
+    let default_consecutive_breach = 30; // half an hour
+    let default_cumulative_breach = 60; // an hour
+
+    // LogTags don't record breach configs in the CSV file, just the temperature range
+    // in a string like "2.0  to  8.0 °C" => setup default breach configs for now
+    let alert_range = parse_string(&json_str).replace("  "," ");
+    let elements: Vec<&str> = alert_range.split(" ").collect();
+
+    if elements.len() > 3 {
+        if let Some(min_temperature) = elements[0].parse::<f64>().ok() { // COLD
+            breach_configs.push(TemperatureBreachConfig {
+                breach_type: BreachType::ColdConsecutive,
+                maximum_temperature: max_breach_temperature,
+                minimum_temperature: min_temperature,
+                duration: Duration::minutes(default_consecutive_breach),
+            });
+            breach_configs.push(TemperatureBreachConfig {
+                breach_type: BreachType::ColdCumulative,
+                maximum_temperature: max_breach_temperature,
+                minimum_temperature: min_temperature,
+                duration: Duration::minutes(default_cumulative_breach),
+            });
+        };
+        if let Some(max_temperature) = elements[2].parse::<f64>().ok() { // HOT
+            breach_configs.push(TemperatureBreachConfig {
+                breach_type: BreachType::HotConsecutive,
+                maximum_temperature: max_temperature,
+                minimum_temperature: min_breach_temperature,
+                duration: Duration::minutes(default_consecutive_breach),
+            });
+            breach_configs.push(TemperatureBreachConfig {
+                breach_type: BreachType::HotCumulative,
+                maximum_temperature: max_temperature,
+                minimum_temperature: min_breach_temperature,
+                duration: Duration::minutes(default_cumulative_breach),
+            });
+        }
+    }
+
+    if breach_configs.len() > 0 {
+        Some(breach_configs)
+    } else {
+        None
+    }
+}
+
 fn parse_logs(json_str: &Value) -> Option<Vec<TemperatureLog>> {
     let mut logs: Vec<TemperatureLog> = Vec::new();
     let mut log_index = 0;
@@ -135,7 +187,7 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
             last_connected_timestamp: parse_timestamp(&file_as_json["Last reading"]),
             log_interval: parse_duration(&file_as_json["Reading interval"]),
             breaches: None,
-            configs: None,
+            configs: parse_breach_configs(&file_as_json["Non alert range"]),
             logs: parse_logs(&file_as_json),
         };
 
