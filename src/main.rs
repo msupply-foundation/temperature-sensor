@@ -16,7 +16,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             start_timestamp = Some(timestamp - Duration::days(3)); // go back from 3 days
         }
 
-        temperature_sensor::filter_sensor(sensor, start_timestamp, None);
+        temperature_sensor::filter_sensor(sensor.clone(), start_timestamp, None);
+        let _breaches = temperature_sensor::calculate_sensor_breaches(&sensor,None);
     } else {
         // read from USB
         let sensor_serials = temperature_sensor::read_connected_serials()?;

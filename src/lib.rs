@@ -95,7 +95,7 @@ pub use crate::common::{
     BreachType, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig, TemperatureLog,
 };
 
-use chrono::{Duration, Local, NaiveDateTime};
+use chrono::{Datelike, Duration, Local, NaiveDateTime};
 
 /// Returns some made-up example temperature sensor data, for use in automated tests.
 pub fn sample_sensor() -> Sensor {
@@ -289,6 +289,178 @@ pub fn read_sensor(serial: &str) -> Result<Sensor, String> {
     }
 
     return Err("Sensor not found".to_string());
+}
+
+fn create_breach(
+    breach_type: &BreachType,
+    breach_start: NaiveDateTime,
+    breach_end: NaiveDateTime,
+    breach_duration: Duration,
+    config_duration: Duration,
+) -> Option<TemperatureBreach> {
+    if breach_duration > config_duration {
+        let temperature_breach = TemperatureBreach {
+            breach_type: breach_type.clone(),
+            start_timestamp: breach_start,
+            end_timestamp: breach_end,
+            duration: breach_duration,
+            acknowledged: false,
+        };
+        Some(temperature_breach)
+    }
+    else {
+        None
+    }
+}
+
+/// Scans through the sensor's temperature logs and works out breaches, based on either
+/// the passed in TemperatureBreachConfig or the sensor's existing breach configs.
+/// 
+/// Consecutive breaches are returned if there are consecutive out-of-range temperature
+/// logs spanning at least the specified duration, and these can span multiple days.
+/// 
+/// Cumulative breaches are returned if there are enough out-of-range temperature logs
+/// within each 24-hour day to accumulate at least the specified duration. If they span 
+/// midnight, they will be split into separate breaches.
+///
+/// Note that the difference between the start and end breach timestamps is only
+/// the same as the breach duration for consecutive breaches which start and end
+/// within the specified interval.
+pub fn calculate_sensor_breaches(
+    sensor: &Sensor,
+    breach_config: Option<TemperatureBreachConfig>,
+) -> Option<Vec<TemperatureBreach>> {
+    let mut breaches: Vec<TemperatureBreach> = Vec::new();
+    let mut configs: Vec<TemperatureBreachConfig> = Vec::new();
+
+    if let Some(sensor_config) = breach_config {
+        configs.push(sensor_config); // use passed in config if it exists
+    } else {
+        match &sensor.configs {
+            Some(sensor_configs) => {
+                configs = sensor_configs.clone(); // otherwise use the sensor configs
+            }
+            None => {}
+        };
+    }
+
+    for config in configs {
+        match &sensor.logs {
+            Some(logs) => {
+                let mut breached = false;
+                let mut breaching: bool;
+                let mut total_breach_duration = Duration::seconds(0);
+                let consecutive_breach = config.breach_type==BreachType::ColdConsecutive || config.breach_type==BreachType::HotConsecutive;
+                let mut start_timestamp = logs[0].timestamp;
+                let last_timestamp = logs[logs.len() - 1].timestamp;
+                let mut breach_end_timestamp= last_timestamp;
+                let mut breach_start_timestamp = start_timestamp;
+
+                for log in logs {
+                    match config.breach_type {
+                        BreachType::HotConsecutive => {
+                            breaching = log.temperature > config.maximum_temperature;
+                        }
+                        BreachType::ColdConsecutive => {
+                            breaching = log.temperature < config.minimum_temperature;
+                        }
+                        BreachType::HotCumulative => {
+                            breaching = log.temperature > config.maximum_temperature;
+                        }
+                        BreachType::ColdCumulative => {
+                            breaching = log.temperature < config.minimum_temperature;
+                        }
+                    };
+
+                    // If it's an ongoing breach, check if it's a cumulative one spanning midnight and
+                    // if so, then end it at midnight and start a new one; also check if we've got 
+                    // to the end of the temperature logs - if so, then end it. And if it's a consecutive
+                    // breach and we're no longer breaching, then end it. 
+                    //
+                    // Otherwise, check if we've just started a new breach
+
+                    if breached {
+                        if log.timestamp == last_timestamp { // end breach if we're at the last log
+                            breach_end_timestamp = log.timestamp;
+                            total_breach_duration = total_breach_duration + (breach_end_timestamp - start_timestamp); // could be cumulative
+                            if let Some(temperature_breach) = create_breach(&config.breach_type, breach_start_timestamp, breach_end_timestamp, total_breach_duration, config.duration) {
+                                breaches.push(temperature_breach);
+                            }
+                        } else {
+                            if consecutive_breach {
+                                if breaching { // nothing to do
+                                } else { // no longer breaching -> end current breach
+                                    breached = false;
+                                    breach_end_timestamp = log.timestamp;
+                                    total_breach_duration = breach_end_timestamp - start_timestamp;
+                                    if let Some(temperature_breach) = create_breach(&config.breach_type, breach_start_timestamp, breach_end_timestamp, total_breach_duration, config.duration) {
+                                        breaches.push(temperature_breach);
+                                    }
+                                    total_breach_duration = Duration::seconds(0); // reset
+                                }
+                            } else { // cumulative
+                                if breaching { // end breach if it's a new day, and start a new one
+                                    if start_timestamp.day() < log.timestamp.day() {
+                                        breach_end_timestamp = log.timestamp.date().and_hms_opt(0, 0, 0).unwrap(); // set to midnight
+                                        total_breach_duration = total_breach_duration + (breach_end_timestamp - start_timestamp); // could be cumulative
+                                        if let Some(temperature_breach) = create_breach(&config.breach_type, breach_start_timestamp, breach_end_timestamp, total_breach_duration, config.duration) {
+                                            breaches.push(temperature_breach);
+                                        }
+                                        start_timestamp = breach_end_timestamp;
+                                        breach_start_timestamp = breach_end_timestamp;
+                                        total_breach_duration = Duration::seconds(0);
+                                    }
+                                } else { // no longer breaching - end it (could happen to end over midnight!)
+                                    if start_timestamp.day() < log.timestamp.day() {
+                                        breach_end_timestamp = log.timestamp.date().and_hms_opt(0, 0, 0).unwrap(); // set to midnight
+                                    } else {
+                                        breach_end_timestamp = log.timestamp;
+                                    }
+                                    breached=false;
+                                    total_breach_duration = total_breach_duration + (breach_end_timestamp - start_timestamp);
+                                }
+                            }
+                        };
+                    } else {
+                        if breaching {
+                            // new breach - store the start time
+                            start_timestamp = log.timestamp;
+                            breached = true;
+                            if total_breach_duration == Duration::seconds(0) { // there hasn't already been a cumulative breach
+                                breach_start_timestamp = start_timestamp;
+                            }
+                        } else {
+                            if log.timestamp == last_timestamp { // end any unsaved cumulative breach if we're at the last log
+                                if let Some(temperature_breach) = create_breach(&config.breach_type, breach_start_timestamp, breach_end_timestamp, total_breach_duration, config.duration) {
+                                    breaches.push(temperature_breach);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            None => {}
+        };
+    }
+
+    if cfg!(debug_assertions) {
+        // Generate output file for debugging/reference
+        let output_path = "sensor_".to_owned() + &sensor.serial + "_breach_output.txt";
+        if let Some(mut output) = File::create(&output_path).ok() {
+            if write!(output, "{}", format!("{:?}\n\n", breaches)).is_ok() {
+                log::info!(
+                    "Breach output: {}",
+                    &output_path
+                );
+            }
+        }
+    }
+
+    if breaches.len() > 0 {
+        Some(breaches)
+    } else {
+        None
+    }
 }
 
 /// Applies optional start/end timestamps to the breaches and temperature logs
