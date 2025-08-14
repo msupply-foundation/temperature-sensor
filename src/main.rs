@@ -17,7 +17,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         temperature_sensor::filter_sensor(sensor.clone(), start_timestamp, None);
-        let _breaches = temperature_sensor::calculate_sensor_breaches(&sensor, None);
     } else {
         // read from USB
         let sensor_serials = temperature_sensor::read_connected_serials()?;

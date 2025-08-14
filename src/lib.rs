@@ -9,8 +9,9 @@
 //! is being rewritten in Rust <https://msupply.foundation/projects/omsupply>.
 //!
 //! So far it only supports Berlinger Fridge-tag and Q-tag USB sensors
-//! <https://www.berlinger.com/cold-chain-management> but it is hoped to extend
-//! it to other sensor types in future.
+//! <https://www.berlinger.com/cold-chain-management>, and LogTag USB sensors
+//! <https://logtagrecorders.com> but it is hoped to extend it to other sensor
+//! types in future.
 //!
 //! (1) Berlinger Fridge-tags without logging e.g. Fridge-tag 2 or Fridge-tag UL:
 //!
@@ -33,32 +34,9 @@
 //! (2) Berlinger Fridge-tags with logging e.g. Fridge-tag 2L:
 //!
 //! These record breaches in the same way and have the same limitations, but they also
-//! record full temperature logs (usually every 5 minutes) => it would be possible to
-//! "correct" the calculated breach start and end times by processing the temperature
-//! logs for the same day by applying the following 3 sets of rules:
-//!
-//! (a) expand the start & end times based on the first & last breaching temperature logs
-//! of the day:
-//!    - if the first breaching temperature log is before the calculated breach start time,
-//!      then set the breach start time to the temperature log time.
-//!    - if the last breaching temperature log is after the calculated breach end time,
-//!      then set the breach end time to the temperature log time.
-//!
-//! (b) take account of the sensor log interval at the start & end of the day:
-//!    - if the first breaching temperature log is within the sensor log interval of
-//!      midnight, then set the breach start time to midnight.
-//!    - if the last breaching temperature log is within the sensor log interval of
-//!      midnight, then set the breach end time to midnight.
-//!
-//! (c) correct for other discrepancies when it's a non-continuous breach:
-//!    - if the first breaching temperature log is more than the sensor log interval
-//!      after the calculated breach start time, then set the breach start time to the
-//!      temperature log time.
-//!    - if the last breaching temperature log is more than the sensor log interval
-//!      before the calculated breach end time, then set the breach end time to the
-//!      temperature log time.
-//!
-//! As we have the temperature logs, we can use these to detect consecutive breaches,
+//! record full temperature logs (usually every 5 minutes) => it is possible to process
+//! these logs to calculate the actual breach duration for cumulative breaches consisting of
+//! more than one episode during a single day, and also to detect consecutive breaches,
 //! assuming that the same breach configurations apply (i.e. the same temperature &
 //! duration thresholds). Unlike cumulative breaches, which are only midnight to midnight,
 //! consecutive breaches have the potential to cover more than one day if they are ongoing
@@ -78,6 +56,22 @@
 //! breach duration to the start time. For non-continuous cumulative breaches, the
 //! true end time can be calculated from the last breaching temperature log of the day.
 //!
+//! (4) LogTags (all with logging):
+//!
+//! These can have multiple breach configurations, but they are not stored in the USB tag's
+//! CSV file - just the minimum and maximum temperatures for the allowed range. We can generate
+//! default hot and cold breach configurations based on these temperatures and the logging
+//! interval - we apply a default consecutive breach threshold of 10x the logging interval
+//! for consecutive breaches and 20x for cumulative breaches, and then we can process the
+//! temperature logs to calculate any breaches based on these default configurations.
+//!
+//! We have added a new `calculate_sensor_breaches` function which allows you to either
+//! calculate breaches for any (optional) arbitrary breach configuration passed in, or for
+//! all existing breach configurations of the sensor. While this was implemented primarily
+//! for LogTags, the same function can be used to (re)calculate the reported breaches for
+//! any Berlinger Fridge-tags which have logging data, and also to extend them by adding new
+//! arbitrary breach configurations (e.g. use different min/max temperatures and/or breach
+//! duration thresholds).
 
 pub mod berlinger;
 pub mod common;
@@ -181,7 +175,7 @@ fn sensor_type_from_filename(file_path: &str) -> SensorType {
 }
 
 /// Returns all sensors found from currently mounted USB drives up to 8GB capacity
-/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// (=> any USB drive containing sensor files if you don't have a physical sensor).
 ///
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
@@ -197,7 +191,7 @@ pub fn read_connected_sensors() -> Result<Vec<Sensor>, String> {
 }
 
 /// Returns all the serials found from currently mounted USB drives up to 8GB capacity
-/// (-> any USB drive containing sensor files if you don't have a physical sensor).
+/// (=> any USB drive containing sensor files if you don't have a physical sensor).
 ///
 /// For Berlinger sensors, it expects to find a serial_xxxxx.txt file in the root folder
 /// together with a matching PDF file (USB drives can have multiple pairs of files).
@@ -233,7 +227,8 @@ pub fn read_sensor_file(file_path: &str) -> Result<Sensor, String> {
             }
         }
         SensorType::LogTag => {
-            if let Some(sensor) = logtag::read_sensor_from_file(&file_path) {
+            if let Some(mut sensor) = logtag::read_sensor_from_file(&file_path) {
+                sensor.breaches = calculate_sensor_breaches(&sensor, None);
                 if cfg!(debug_assertions) {
                     // Generate output file for debugging/reference
                     let output_path = "sensor_".to_owned() + &sensor.serial + "_output.txt";
