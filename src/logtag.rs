@@ -104,45 +104,54 @@ fn parse_duration(json_str: &Value) -> Option<Duration> {
 
 fn parse_breach_configs(
     json_str: &Value,
+    log_interval: Option<Duration>,
 ) -> Option<Vec<TemperatureBreachConfig>> {
     let mut breach_configs: Vec<TemperatureBreachConfig> = Vec::new();
     let max_breach_temperature = 100.0; // boiling point of water (should be safe default max!)
     let min_breach_temperature = -273.0; // absolute zero (should be safe default min!)
-    let default_consecutive_breach = 30; // half an hour
-    let default_cumulative_breach = 60; // an hour
+    let mut default_consecutive_breach = Duration::minutes(30); // half an hour
+    let mut default_cumulative_breach = Duration::minutes(60); // an hour
+
+    if let Some(duration) = log_interval {
+        // set default to 10/20 log intervals if passed
+        default_consecutive_breach = duration * 10;
+        default_cumulative_breach = duration * 20;
+    }
 
     // LogTags don't record breach configs in the CSV file, just the temperature range
     // in a string like "2.0  to  8.0 °C" => setup default breach configs for now
-    let alert_range = parse_string(&json_str).replace("  "," ");
+    let alert_range = parse_string(&json_str).replace("  ", " ");
     let elements: Vec<&str> = alert_range.split(" ").collect();
 
     if elements.len() > 3 {
-        if let Some(min_temperature) = elements[0].parse::<f64>().ok() { // COLD
+        if let Some(min_temperature) = elements[0].parse::<f64>().ok() {
+            // COLD
             breach_configs.push(TemperatureBreachConfig {
                 breach_type: BreachType::ColdConsecutive,
                 maximum_temperature: max_breach_temperature,
                 minimum_temperature: min_temperature,
-                duration: Duration::minutes(default_consecutive_breach),
+                duration: default_consecutive_breach,
             });
             breach_configs.push(TemperatureBreachConfig {
                 breach_type: BreachType::ColdCumulative,
                 maximum_temperature: max_breach_temperature,
                 minimum_temperature: min_temperature,
-                duration: Duration::minutes(default_cumulative_breach),
+                duration: default_cumulative_breach,
             });
         };
-        if let Some(max_temperature) = elements[2].parse::<f64>().ok() { // HOT
+        if let Some(max_temperature) = elements[2].parse::<f64>().ok() {
+            // HOT
             breach_configs.push(TemperatureBreachConfig {
                 breach_type: BreachType::HotConsecutive,
                 maximum_temperature: max_temperature,
                 minimum_temperature: min_breach_temperature,
-                duration: Duration::minutes(default_consecutive_breach),
+                duration: default_consecutive_breach,
             });
             breach_configs.push(TemperatureBreachConfig {
                 breach_type: BreachType::HotCumulative,
                 maximum_temperature: max_temperature,
                 minimum_temperature: min_breach_temperature,
-                duration: Duration::minutes(default_cumulative_breach),
+                duration: default_cumulative_breach,
             });
         }
     }
@@ -191,15 +200,16 @@ fn parse_logs(json_str: &Value) -> Option<Vec<TemperatureLog>> {
 pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
     if Path::new(file_path).exists() {
         let file_as_json = read_sensor_to_json(file_path);
+        let log_interval = parse_duration(&file_as_json["Reading interval"]);
 
         let sensor = Sensor {
             sensor_type: SensorType::LogTag,
             serial: parse_string(&file_as_json["Serial #"]),
             name: parse_string(&file_as_json["Description"]),
             last_connected_timestamp: parse_timestamp(&file_as_json["Last reading"]),
-            log_interval: parse_duration(&file_as_json["Reading interval"]),
+            log_interval: log_interval,
             breaches: None,
-            configs: parse_breach_configs(&file_as_json["Non alert range"]),
+            configs: parse_breach_configs(&file_as_json["Non alert range"], log_interval),
             logs: parse_logs(&file_as_json),
         };
 
