@@ -15,13 +15,18 @@
 //!
 //! (1) Berlinger Fridge-tags without logging e.g. Fridge-tag 2 or Fridge-tag UL:
 //!
-//! Temperature logs are only recorded for the max & min temperature each day, and
-//! only cumulative breaches (from midnight to midnight) are recorded, where:
-//!     Alarm=0 => cold (cumulative) breach
-//!     Alarm=1 => hot (cumulative) breach
+//! Temperature logs are only recorded for the max & min temperature each day. Alarms are
+//! single-event i.e. triggered when the temperature is continuously out of range for longer
+//! than the alarm duration, so they are returned as consecutive breaches, where:
+//!     Alarm=0 => cold (consecutive) breach
+//!     Alarm=1 => hot (consecutive) breach
+//!
+//! Each day also records the min, max & average temperature and the total (cumulative) time
+//! above/below the alarm temperatures. That cumulative time never triggers an alarm, so it is
+//! returned in the sensor's daily summaries rather than as a breach.
 //!
 //! Note that the sensor doesn't record the start or end of the breach, only the time
-//! when the breach was triggered and the total duration of the breach
+//! when the breach was triggered and the total time out of range that day
 //! => we work out the breach start time by subtracting the breach config duration
 //! from the breach trigger time (or midnight if that is later) and we work out
 //! the breach end time by adding the total breach duration to the breach start time
@@ -35,12 +40,12 @@
 //!
 //! These record breaches in the same way and have the same limitations, but they also
 //! record full temperature logs (usually every 5 minutes) => it is possible to process
-//! these logs to calculate the actual breach duration for cumulative breaches consisting of
-//! more than one episode during a single day, and also to detect consecutive breaches,
-//! assuming that the same breach configurations apply (i.e. the same temperature &
-//! duration thresholds). Unlike cumulative breaches, which are only midnight to midnight,
-//! consecutive breaches have the potential to cover more than one day if they are ongoing
-//! at midnight, and of course you can have multiple consecutive breaches per day.
+//! these logs to calculate the actual start & end of each breach, and also to detect
+//! cumulative breaches, assuming that the same breach configurations apply (i.e. the same
+//! temperature & duration thresholds). Unlike the alarms recorded by the sensor, which are
+//! cut off at midnight, breaches calculated from logs have the potential to cover more than
+//! one day if they are ongoing at midnight, and of course you can have multiple breaches
+//! per day.
 //!
 //! (3) Berlinger Q-tags (all with logging?) e.g. Q-tag CLm doc LR:
 //!
@@ -86,7 +91,8 @@ use std::path::Path;
 use rs_drivelist::drive_list;
 
 pub use crate::common::{
-    BreachType, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig, TemperatureLog,
+    BreachType, DailySummary, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig,
+    TemperatureLog,
 };
 
 use chrono::{Datelike, Duration, Local, NaiveDateTime};
@@ -161,6 +167,7 @@ pub fn sample_sensor() -> Sensor {
         breaches: Some(vec![breach_hot_consecutive, breach_cold_consecutive]),
         configs: Some(vec![config_cold_consecutive, config_hot_consecutive]),
         logs: Some(temperature_logs),
+        daily_summaries: None,
     };
 
     sensor
@@ -499,8 +506,8 @@ pub fn calculate_sensor_breaches(
     }
 }
 
-/// Applies optional start/end timestamps to the breaches and temperature logs
-/// of the specified sensor e.g. to include only data since the last time the
+/// Applies optional start/end timestamps to the breaches, temperature logs and
+/// daily summaries of the specified sensor e.g. to include only data since the last time the
 /// sensor was read (or from the start of the last recorded breach if it was
 /// ongoing at the time of the last sensor read).
 ///
@@ -510,6 +517,10 @@ pub fn calculate_sensor_breaches(
 /// Breaches are filtered out if they are entirely before the start timestamp or after
 /// the end timestamp i.e. keep if any part of the breach is between the start timestamp
 /// and the end timestamp.
+///
+/// Daily summaries are filtered out if their date is before the date of the start
+/// timestamp or after the date of the end timestamp i.e. the day being recorded when the
+/// sensor was last read is kept, as its summary is likely to have been incomplete.
 ///
 /// Note that the difference between the start and end breach timestamps is only
 /// the same as the breach duration for consecutive breaches which start and end
@@ -556,6 +567,14 @@ pub fn filter_sensor(
             }
             None => {}
         };
+        if let Some(daily_summaries) = sensor.daily_summaries {
+            // keep the day containing the start timestamp, as its summary may have been incomplete
+            let filtered_summaries: Vec<DailySummary> = daily_summaries
+                .into_iter()
+                .filter(|daily_summary| daily_summary.date >= start.date())
+                .collect();
+            sensor.daily_summaries = (filtered_summaries.len() > 0).then_some(filtered_summaries);
+        }
     }
 
     if let Some(end) = end_timestamp {
@@ -595,6 +614,13 @@ pub fn filter_sensor(
             }
             None => {}
         };
+        if let Some(daily_summaries) = sensor.daily_summaries {
+            let filtered_summaries: Vec<DailySummary> = daily_summaries
+                .into_iter()
+                .filter(|daily_summary| daily_summary.date <= end.date())
+                .collect();
+            sensor.daily_summaries = (filtered_summaries.len() > 0).then_some(filtered_summaries);
+        }
     }
 
     if cfg!(debug_assertions) {
@@ -809,6 +835,7 @@ pub fn read_sensors_from_usb() -> Option<Vec<Sensor>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::NaiveDate;
 
     #[test]
     fn test_sample_core() {
@@ -869,5 +896,66 @@ mod tests {
             assert_eq!(logs[0].timestamp, start_timestamp); // start of hot breach changed
             assert_eq!(logs[8].timestamp, end_timestamp); // end of cold breach changed
         }
+    }
+
+    #[test]
+    fn test_fridgetag_daily_summaries() {
+        let sensor = read_sensor_file("data/FridgeTag 2/130400191544_202304201514.txt").unwrap();
+        let daily_summaries = sensor.daily_summaries.unwrap();
+
+        assert_eq!(daily_summaries.len(), 4);
+        let daily_summary = &daily_summaries[3];
+        assert_eq!(
+            daily_summary.date,
+            NaiveDate::from_ymd_opt(2023, 4, 20).unwrap()
+        );
+        assert_eq!(daily_summary.minimum_temperature, Some(2.0));
+        assert_eq!(daily_summary.maximum_temperature, Some(8.0));
+        assert_eq!(daily_summary.average_temperature, Some(4.6));
+        assert_eq!(daily_summary.cold_duration, Some(Duration::zero()));
+        assert_eq!(daily_summary.hot_duration, Some(Duration::zero()));
+        assert_eq!(daily_summary.cold_threshold, Some(-0.5));
+        assert_eq!(daily_summary.hot_threshold, Some(8.0));
+
+        // min & max are still returned as logs
+        assert_eq!(sensor.logs.unwrap().len(), 8);
+    }
+
+    #[test]
+    fn test_fridgetag_alarms_are_consecutive() {
+        let sensor = read_sensor_file("data/FridgeTag 2/130400191542_202302140605.txt").unwrap();
+
+        let breaches = sensor.breaches.unwrap();
+        assert!(breaches
+            .iter()
+            .all(|breach| breach.breach_type == BreachType::HotConsecutive
+                || breach.breach_type == BreachType::ColdConsecutive));
+        let configs = sensor.configs.unwrap();
+        assert!(configs
+            .iter()
+            .all(|config| config.breach_type == BreachType::HotConsecutive
+                || config.breach_type == BreachType::ColdConsecutive));
+
+        // the cumulative time out of range is in the daily summaries, alarm or not
+        let daily_summaries = sensor.daily_summaries.unwrap();
+        let last_day = daily_summaries.last().unwrap();
+        assert_eq!(last_day.date, NaiveDate::from_ymd_opt(2023, 2, 14).unwrap());
+        assert_eq!(last_day.hot_duration, Some(Duration::minutes(366)));
+    }
+
+    #[test]
+    fn test_fridgetag_filter_daily_summaries() {
+        let sensor = read_sensor_file("data/FridgeTag 2/130400191544_202304201514.txt").unwrap();
+        let start_timestamp =
+            NaiveDateTime::parse_from_str("2023-04-19 15:00:00", "%Y-%m-%d %H:%M:%S").unwrap();
+        let sensor = filter_sensor(sensor, Some(start_timestamp), None);
+
+        // the day being recorded at the start timestamp is kept
+        let daily_summaries = sensor.daily_summaries.unwrap();
+        assert_eq!(daily_summaries.len(), 2);
+        assert_eq!(
+            daily_summaries[0].date,
+            NaiveDate::from_ymd_opt(2023, 4, 19).unwrap()
+        );
     }
 }

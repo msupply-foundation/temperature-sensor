@@ -6,7 +6,8 @@ use std::io::BufRead;
 use std::path::Path;
 
 use crate::common::{
-    BreachType, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig, TemperatureLog,
+    BreachType, DailySummary, Sensor, SensorType, TemperatureBreach, TemperatureBreachConfig,
+    TemperatureLog,
 };
 
 #[derive(Debug)]
@@ -307,7 +308,8 @@ fn parse_breach_configs(
 
     match sensor_subtype {
         SensorSubType::FridgeTag => {
-            // duplicate cumulative breach config as a consecutive breach as well
+            // FridgeTag alarms are single-event i.e. consecutive (the cumulative daily time
+            // out of range never triggers an alarm, see DailySummary)
             if let Some(temperature) = parse_float(&json_str["0"]["T AL"]) {
                 // COLD
                 max_temperature = max_breach_temperature;
@@ -316,12 +318,6 @@ fn parse_breach_configs(
                 if let Some(duration) = parse_duration(&json_str["0"]["t AL"]) {
                     breach_configs.push(TemperatureBreachConfig {
                         breach_type: BreachType::ColdConsecutive,
-                        maximum_temperature: max_temperature,
-                        minimum_temperature: min_temperature,
-                        duration: duration,
-                    });
-                    breach_configs.push(TemperatureBreachConfig {
-                        breach_type: BreachType::ColdCumulative,
                         maximum_temperature: max_temperature,
                         minimum_temperature: min_temperature,
                         duration: duration,
@@ -337,12 +333,6 @@ fn parse_breach_configs(
                 if let Some(duration) = parse_duration(&json_str["1"]["t AL"]) {
                     breach_configs.push(TemperatureBreachConfig {
                         breach_type: BreachType::HotConsecutive,
-                        maximum_temperature: max_temperature,
-                        minimum_temperature: min_temperature,
-                        duration: duration,
-                    });
-                    breach_configs.push(TemperatureBreachConfig {
-                        breach_type: BreachType::HotCumulative,
                         maximum_temperature: max_temperature,
                         minimum_temperature: min_temperature,
                         duration: duration,
@@ -554,21 +544,21 @@ fn parse_breaches(
                 if let Some(breach_date) = parse_date(&json_alarm["Date"]) {
                     // breach date
                     if let Some(temperature_breach) = parse_fridgetag_breach(
-                        // COLD_CUMULATIVE
+                        // COLD_CONSECUTIVE
                         &json_alarm["Alarm"]["0"],
                         &json_str["Conf"]["Alarm"]["0"],
                         breach_date,
-                        BreachType::ColdCumulative,
+                        BreachType::ColdConsecutive,
                     ) {
                         breaches.push(temperature_breach);
                     }
 
                     if let Some(temperature_breach) = parse_fridgetag_breach(
-                        // HOT_CUMULATIVE
+                        // HOT_CONSECUTIVE
                         &json_alarm["Alarm"]["1"],
                         &json_str["Conf"]["Alarm"]["1"],
                         breach_date,
-                        BreachType::HotCumulative,
+                        BreachType::HotConsecutive,
                     ) {
                         breaches.push(temperature_breach);
                     }
@@ -741,6 +731,45 @@ fn parse_logs(json_str: &Value, sensor_subtype: &SensorSubType) -> Option<Vec<Te
     }
 }
 
+fn parse_daily_summaries(
+    json_str: &Value,
+    sensor_subtype: &SensorSubType,
+) -> Option<Vec<DailySummary>> {
+    let mut daily_summaries: Vec<DailySummary> = Vec::new();
+
+    if let SensorSubType::FridgeTag = sensor_subtype {
+        let mut summary_index = 1;
+
+        loop {
+            // loop until no more Hist elements
+            let json_summary = &json_str["Hist"][summary_index.to_string()];
+
+            if json_summary.is_null() {
+                break;
+            } else if let Some(date) = parse_date(&json_summary["Date"]) {
+                daily_summaries.push(DailySummary {
+                    date,
+                    minimum_temperature: parse_float(&json_summary["Min T"]),
+                    maximum_temperature: parse_float(&json_summary["Max T"]),
+                    average_temperature: parse_float(&json_summary["Avrg T"]),
+                    cold_duration: parse_duration(&json_summary["Alarm"]["0"]["t Acc"]),
+                    hot_duration: parse_duration(&json_summary["Alarm"]["1"]["t Acc"]),
+                    cold_threshold: parse_float(&json_str["Conf"]["Alarm"]["0"]["T AL"]),
+                    hot_threshold: parse_float(&json_str["Conf"]["Alarm"]["1"]["T AL"]),
+                });
+            }
+            summary_index = summary_index + 1;
+        }
+    }
+
+    if daily_summaries.len() > 0 {
+        daily_summaries.sort_unstable_by_key(|daily_summary| daily_summary.date);
+        Some(daily_summaries)
+    } else {
+        None
+    }
+}
+
 /// Reads sensor data from the specified sensor txt file.
 pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
     if Path::new(file_path).exists() {
@@ -768,6 +797,7 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
             breaches: parse_breaches(&file_as_json, &sensor_subtype),
             configs: parse_breach_configs(&file_as_json["Conf"]["Alarm"], &sensor_subtype),
             logs: parse_logs(&file_as_json, &sensor_subtype),
+            daily_summaries: parse_daily_summaries(&file_as_json, &sensor_subtype),
         };
 
         Some(sensor)
