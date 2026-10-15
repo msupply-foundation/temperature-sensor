@@ -226,7 +226,7 @@ fn read_sensor_to_json(file_path: &str) -> Value {
         data_temperatures.remove(0); // remove first element as it is a header
         current_json["Data"]["Temperature"] = Value::Array(data_temperatures);
     }
-    if data_breaches.len() > 0 {
+    if data_breaches.len() > 1 {
         data_breaches.remove(0); // remove first element as it is a header
         current_json["Data"]["Breach"] = Value::Array(data_breaches);
     }
@@ -239,7 +239,7 @@ fn read_sensor_to_json(file_path: &str) -> Value {
         marker_temperatures.remove(0); // remove first element as it is a header
         current_json["Marker"]["Temperature"] = Value::Array(marker_temperatures);
     }
-    if marker_numbers.len() > 0 {
+    if marker_numbers.len() > 1 {
         marker_numbers.remove(0); // remove first element as it is a header
         current_json["Marker"]["Number"] = Value::Array(marker_numbers);
     }
