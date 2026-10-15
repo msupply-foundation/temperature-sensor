@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDateTime};
+use chrono::{Duration, NaiveDate, NaiveDateTime};
 
 #[derive(Debug, Clone)]
 /// Define the types encountered when parsing a sensor txt file (e.g. Berlinger).
@@ -64,4 +64,20 @@ pub struct Sensor {
     pub breaches: Option<Vec<TemperatureBreach>>,
     pub configs: Option<Vec<TemperatureBreachConfig>>,
     pub logs: Option<Vec<TemperatureLog>>,
+    pub daily_summaries: Option<Vec<DailySummary>>,
+}
+
+#[derive(Debug, Clone)]
+/// Define the structure used to capture a sensor's own summary of a day (e.g. a FridgeTag's
+/// history). The hot & cold durations are the total time that day above the hot alarm
+/// temperature / below the cold alarm temperature, whether or not an alarm was triggered.
+pub struct DailySummary {
+    pub date: NaiveDate,
+    pub minimum_temperature: Option<f64>,
+    pub maximum_temperature: Option<f64>,
+    pub average_temperature: Option<f64>,
+    pub hot_duration: Option<Duration>,
+    pub cold_duration: Option<Duration>,
+    pub hot_threshold: Option<f64>, // the hot alarm temperature in force when read
+    pub cold_threshold: Option<f64>, // the cold alarm temperature in force when read
 }
