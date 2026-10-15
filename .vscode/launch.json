@@ -7,6 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Launch Program",
+            "program": "${workspaceFolder}/target/debug/temperature-sensor.exe",
+            "args": ["LogTag_D0C500100160_8_241115_1204_ALM.csv"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "rust: cargo build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'temperature-sensor'",
             "cargo": {
                 "args": [
@@ -24,9 +33,21 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "type": "cppvsdbg",
+            "request": "launch",
+            "name": "C++ Debug executable 'temperature-sensor'",
+            "program": "${workspaceFolder}/target/debug/temperature-sensor.exe",
+            "args": ["LogTag_D0C500100160_8_241115_1204_ALM.csv"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "rust: cargo build"
+        },
+                {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'temperature-sensor'",
+            "name": "LLDB Debug executable 'temperature-sensor'",
             "cargo": {
                 "args": [
                     "build",
@@ -38,7 +59,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": ["LogTag_D0C500100160_8_241115_1204_ALM.csv"],
             "cwd": "${workspaceFolder}"
         },
         {
