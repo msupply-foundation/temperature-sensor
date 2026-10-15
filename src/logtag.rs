@@ -189,7 +189,7 @@ fn parse_logs(json_str: &Value) -> Option<Vec<TemperatureLog>> {
     }
 
     if logs.len() > 0 {
-        logs.sort_unstable_by_key(|logs| (logs.timestamp));
+        logs.sort_unstable_by_key(|logs| logs.timestamp);
         Some(logs)
     } else {
         None
