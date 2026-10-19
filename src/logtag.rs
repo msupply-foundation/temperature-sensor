@@ -211,6 +211,7 @@ pub fn read_sensor_from_file(file_path: &str) -> Option<Sensor> {
             breaches: None,
             configs: parse_breach_configs(&file_as_json["Non alert range"], log_interval),
             logs: parse_logs(&file_as_json),
+            daily_summaries: None,
         };
 
         Some(sensor)
